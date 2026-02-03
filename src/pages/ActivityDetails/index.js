@@ -13,7 +13,6 @@ const categoryMap = {
   comprehension: "Compreensão",
 };
 
-/** Retorna URL absoluta para mídia (imagem/áudio) se vier como path relativo */
 function mediaUrl(value) {
   if (!value) return null;
   if (typeof value === "string" && value.startsWith("http")) return value;
@@ -23,7 +22,6 @@ function mediaUrl(value) {
     : value;
 }
 
-/** Player de áudio simples para visualização */
 function AudioPlayer({ src }) {
   if (!src) return null;
   return (
