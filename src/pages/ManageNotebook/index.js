@@ -169,7 +169,7 @@ function ManageNotebookPage() {
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
       await axios.delete(
-        `https://labirinto-do-saber.vercel.app/task-notebook/delete/${notebookToDelete}`,
+        `${process.env.REACT_APP_API_BASE_URL}/task-notebook/delete/${notebookToDelete}`,
         config
       );
 

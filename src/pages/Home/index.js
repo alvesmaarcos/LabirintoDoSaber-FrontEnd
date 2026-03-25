@@ -9,7 +9,7 @@ import iconRandom from "../../assets/images/icon_random.png";
 import { useLocation } from "react-router-dom";
 import Navbar from "../../components/ui/NavBar/index.js";
 
-const API_BASE_URL = "https://labirinto-do-saber.vercel.app";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function Home() {
   const [userName, setUserName] = useState("");

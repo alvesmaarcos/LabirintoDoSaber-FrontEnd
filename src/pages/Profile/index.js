@@ -7,7 +7,7 @@ import iconProfile from "../../assets/images/icon_profile.png";
 import iconArrowLeft from "../../assets/images/seta_icon_esquerda.png";
 import Navbar from "../../components/ui/NavBar/index.js";
 
-const API_BASE_URL = "https://labirinto-do-saber.vercel.app";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function ProfileEdit() {
   const navigate = useNavigate();

@@ -10,7 +10,7 @@ import iconSeta from "../../assets/images/seta_icon.png";
 import iconSession from "../../assets/images/icon_profile.png";
 import SearchBar from "../../components/ui/SearchBar/Search";
 import Navbar from "../../components/ui/NavBar/index.js";
-const API_BASE_URL = "https://labirinto-do-saber.vercel.app";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const formatDate = (dateString) => {
     if (!dateString) return "Data desconhecida";

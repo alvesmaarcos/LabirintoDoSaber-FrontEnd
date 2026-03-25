@@ -146,7 +146,7 @@ function ManageGroupPage() {
         try {
             // CASO 1: Deletar Grupo Inteiro
             if (deleteTarget.type === 'GROUP') {
-                await axios.delete(`https://labirinto-do-saber.vercel.app/task-group/delete/${deleteTarget.id}`, config);
+                await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/task-group/delete/${deleteTarget.id}`, config);
                 setGroups(groups.filter(group => group.id !== deleteTarget.id));
             } 
             // CASO 2: Remover Atividade de dentro do Grupo
@@ -156,7 +156,7 @@ function ManageGroupPage() {
 
                 // Se não sobrou nenhuma atividade -> Deleta o grupo
                 if (newTaskIds.length === 0) {
-                    await axios.delete(`https://labirinto-do-saber.vercel.app/task-group/delete/${selectedGroup.id}`, config);
+                    await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/task-group/delete/${selectedGroup.id}`, config);
                     setGroups(groups.filter(g => g.id !== selectedGroup.id));
                     setIsGroupModalOpen(false);
                     setSelectedGroup(null);

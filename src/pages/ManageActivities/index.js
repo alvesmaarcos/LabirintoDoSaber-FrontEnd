@@ -135,7 +135,7 @@ function ManageActivitiesPage() {
       };
 
       await axios.delete(
-        `https://labirinto-do-saber.vercel.app/task/delete/${activityToDelete}`,
+        `${process.env.REACT_APP_API_BASE_URL}/task/delete/${activityToDelete}`,
         config
       );
 

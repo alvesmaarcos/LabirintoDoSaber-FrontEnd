@@ -5,7 +5,7 @@ import axios from "axios";
 
 import iconArrowLeft from "../../assets/images/seta_icon_esquerda.png";
 import Navbar from "../../components/ui/NavBar/index.js";
-const API_BASE_URL = "https://labirinto-do-saber.vercel.app";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 // --- NOVA FUNÇÃO AUXILIAR PARA FORMATAR O TEMPO ---
 const formatDuration = (seconds) => {

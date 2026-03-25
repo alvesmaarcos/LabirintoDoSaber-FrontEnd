@@ -8,7 +8,7 @@ import iconPencil from "../../assets/images/edit.png";
 import Navbar from "../../components/ui/NavBar/index.js";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE_URL = "https://labirinto-do-saber.vercel.app";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function AlunosPage() {
   const navigate = useNavigate();

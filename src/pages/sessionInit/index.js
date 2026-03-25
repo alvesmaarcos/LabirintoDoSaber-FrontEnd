@@ -5,7 +5,7 @@ import axios from "axios";
 import iconArrowLeft from "../../assets/images/seta_icon_esquerda.png";
 import labirintoLogo from "../../assets/images/logo.png";
 
-const API_BASE_URL = "https://labirinto-do-saber.vercel.app";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const formatTime = (totalSeconds) => {
   if (!totalSeconds || isNaN(totalSeconds)) return "00:00";
