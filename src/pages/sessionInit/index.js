@@ -147,12 +147,14 @@ const OptionButtons = ({ options, onSelect, selectedId, isAnswered, feedback }) 
         if (isAnswered) {
           if (isSelected) {
             buttonStyle =
-              feedback === true || feedback === null
+              feedback === true
                 ? { backgroundColor: "#4CAF50", color: "white", borderColor: "#4CAF50" }
                 : { backgroundColor: "#F44336", color: "white", borderColor: "#F44336" };
           } else {
             buttonStyle = { opacity: 0.6, cursor: "not-allowed" };
           }
+        } else if (isSelected) {
+          buttonStyle = { borderColor: "#4A90E2", backgroundColor: "#EBF3FB" };
         }
 
         return (
@@ -243,7 +245,7 @@ function SessionInitPage() {
   const [selectedAlternativeId, setSelectedAlternativeId] = useState(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [answerFeedback, setAnswerFeedback] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [taskDetails, setTaskDetails] = useState(null);
 
   const [isBnW, setIsBnW] = useState(() => localStorage.getItem("sessionBnW") === "1");
 
@@ -261,44 +263,83 @@ function SessionInitPage() {
     setIsAnswered(false);
     setAnswerFeedback(null);
     setQuestionStartTime(Date.now());
-    setIsLoading(false);
-  }, [currentActivityIndex]);
+    setTaskDetails(null);
+
+    const taskId = sessionActivities[currentActivityIndex]?.id || sessionActivities[currentActivityIndex]?._id;
+    if (!taskId) return;
+
+    const token = localStorage.getItem("authToken");
+    fetch(`${API_BASE_URL}/task/${taskId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("[taskDetails] resposta da API:", data);
+        setTaskDetails(data);
+      })
+      .catch((err) => console.error("[taskDetails] erro ao buscar task:", err));
+  }, [currentActivityIndex, sessionActivities]);
+
+  useEffect(() => {
+    if (!isAnswered || answerFeedback !== null || !taskDetails || !selectedAlternativeId) return;
+
+    const selectedAlt = taskDetails.alternatives?.find(
+      (alt) => String(alt.id ?? alt._id) === String(selectedAlternativeId)
+    );
+    if (selectedAlt !== undefined) {
+      setAnswerFeedback(selectedAlt.isCorrect);
+    }
+  }, [taskDetails, isAnswered, answerFeedback, selectedAlternativeId]);
 
   const currentActivity = sessionActivities[currentActivityIndex];
   const isLastActivity = currentActivityIndex === sessionActivities.length - 1;
 
-  const handleOptionSelect = async (alternativeId) => {
-    if (isAnswered || isLoading) return;
-
+  const handleOptionSelect = (alternativeId) => {
+    if (isAnswered) return;
     setSelectedAlternativeId(alternativeId);
-    setIsLoading(true);
+  };
+
+  const handleConfirmAnswer = async () => {
+    if (!selectedAlternativeId || isAnswered) return;
 
     const timeToAnswer = Math.max(0, Math.floor((Date.now() - questionStartTime) / 1000));
     const taskId = currentActivity?.id || currentActivity?._id;
 
+    console.log("[confirm] taskDetails:", taskDetails);
+    console.log("[confirm] selectedAlternativeId:", selectedAlternativeId);
+
+    const selectedAlt = taskDetails?.alternatives?.find(
+      (alt) => String(alt.id ?? alt._id) === String(selectedAlternativeId)
+    );
+
+    console.log("[confirm] selectedAlt encontrado:", selectedAlt);
+
+    setIsAnswered(true);
+
+    if (selectedAlt !== undefined) {
+      setAnswerFeedback(selectedAlt.isCorrect);
+    }
+
     const payload = {
       sessionId: sessionId,
       taskId: taskId,
-      selectedAlternativeId: alternativeId,
+      selectedAlternativeId: selectedAlternativeId,
       timeToAnswer: timeToAnswer,
     };
 
     try {
       const token = localStorage.getItem("authToken");
-      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const response = await axios.post(`${API_BASE_URL}/task-notebook-session/answer`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      const response = await axios.post(`${API_BASE_URL}/task-notebook-session/answer`, payload, config);
-
-      const lastAnswer = response.data.answers ? response.data.answers[response.data.answers.length - 1] : null;
-      const isCorrect = lastAnswer ? lastAnswer.isCorrect : true;
-
-      setAnswerFeedback(isCorrect);
-      setIsAnswered(true);
+      if (selectedAlt === undefined) {
+        const lastAnswer = response.data.answers?.[response.data.answers.length - 1];
+        setAnswerFeedback(lastAnswer ? lastAnswer.isCorrect : false);
+      }
     } catch (error) {
-      setAnswerFeedback(true);
-      setIsAnswered(true);
-    } finally {
-      setIsLoading(false);
+      console.error("Erro ao registrar resposta:", error);
+      if (selectedAlt === undefined) setAnswerFeedback(false);
     }
   };
 
@@ -331,10 +372,12 @@ function SessionInitPage() {
   const renderActivity = () => {
     if (!currentActivity) return <div>Carregando Atividade...</div>;
 
+    const options = taskDetails?.alternatives || currentActivity.alternatives || currentActivity.options || [];
+
     const activityProps = {
       key: currentActivity.id || currentActivityIndex,
       question: currentActivity.prompt || currentActivity.question || "Selecione:",
-      options: currentActivity.alternatives || currentActivity.options || [],
+      options,
       imageSrc: currentActivity.imageFile,
       audioSrc: currentActivity.audioFile,
       onSelect: handleOptionSelect,
@@ -394,23 +437,41 @@ function SessionInitPage() {
             )}
 
             <div style={{ marginTop: "20px", textAlign: "center" }}>
-              <button
-                onClick={handleNextOrFinish}
-                className="session-debug-btn"
-                disabled={!isAnswered}
-                style={{
-                  backgroundColor: isLastActivity ? "#FF5722" : "#4A90E2",
-                  opacity: !isAnswered ? 0.5 : 1,
-                  cursor: !isAnswered ? "not-allowed" : "pointer",
-                  padding: "10px 30px",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  fontWeight: "bold",
-                }}
-              >
-                {isLastActivity ? "ENCERRAR SESSÃO" : "PRÓXIMA ATIVIDADE"}
-              </button>
+              {!isAnswered ? (
+                <button
+                  onClick={handleConfirmAnswer}
+                  className="session-debug-btn"
+                  disabled={!selectedAlternativeId}
+                  style={{
+                    backgroundColor: "#4A90E2",
+                    opacity: !selectedAlternativeId ? 0.5 : 1,
+                    cursor: !selectedAlternativeId ? "not-allowed" : "pointer",
+                    padding: "10px 30px",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Confirmar resposta
+                </button>
+              ) : (
+                <button
+                  onClick={handleNextOrFinish}
+                  className="session-debug-btn"
+                  style={{
+                    backgroundColor: isLastActivity ? "#FF5722" : "#4A90E2",
+                    cursor: "pointer",
+                    padding: "10px 30px",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {isLastActivity ? "ENCERRAR SESSÃO" : "Próxima tarefa"}
+                </button>
+              )}
             </div>
           </div>
         </div>
