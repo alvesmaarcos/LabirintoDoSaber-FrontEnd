@@ -38,6 +38,7 @@ function ReportSession() {
     timeMetrics: [],
     categoryRates: [],
     activityRates: [],
+    observation: null,
   });
 
   useEffect(() => {
@@ -103,6 +104,8 @@ function ReportSession() {
                 value: formatPercent(val),
               }))
             : [],
+
+          observation: api.observation || null,
         });
 
         setLoading(false);
@@ -228,6 +231,13 @@ function ReportSession() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {!loading && sessionData.observation && (
+              <div className="report-observation-box">
+                <h2 className="report-observation-title">Observações da Sessão</h2>
+                <p className="report-observation-text">{sessionData.observation}</p>
               </div>
             )}
           </div>

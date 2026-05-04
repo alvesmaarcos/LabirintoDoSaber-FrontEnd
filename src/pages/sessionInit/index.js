@@ -264,14 +264,19 @@ function SessionInitPage() {
 
   const [isBnW, setIsBnW] = useState(() => localStorage.getItem("sessionBnW") === "1");
 
+  const [showObservationModal, setShowObservationModal] = useState(false);
+  const [observationText, setObservationText] = useState("");
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+
   useEffect(() => {
     localStorage.setItem("sessionBnW", isBnW ? "1" : "0");
   }, [isBnW]);
 
   useEffect(() => {
+    if (showObservationModal) return;
     const timerId = setInterval(() => setSessionTimeElapsed((prev) => prev + 1), 1000);
     return () => clearInterval(timerId);
-  }, []);
+  }, [showObservationModal]);
 
   useEffect(() => {
     setSelectedAlternativeId(null);
@@ -303,6 +308,7 @@ function SessionInitPage() {
     );
     if (selectedAlt !== undefined) {
       setAnswerFeedback(selectedAlt.isCorrect);
+      if (selectedAlt.isCorrect) setCorrectAnswers((prev) => prev + 1);
     }
   }, [taskDetails, isAnswered, answerFeedback, selectedAlternativeId]);
 
@@ -333,6 +339,7 @@ function SessionInitPage() {
 
     if (selectedAlt !== undefined) {
       setAnswerFeedback(selectedAlt.isCorrect);
+      if (selectedAlt.isCorrect) setCorrectAnswers((prev) => prev + 1);
     }
 
     const payload = {
@@ -350,7 +357,9 @@ function SessionInitPage() {
 
       if (selectedAlt === undefined) {
         const lastAnswer = response.data.answers?.[response.data.answers.length - 1];
-        setAnswerFeedback(lastAnswer ? lastAnswer.isCorrect : false);
+        const apiIsCorrect = lastAnswer ? lastAnswer.isCorrect : false;
+        setAnswerFeedback(apiIsCorrect);
+        if (apiIsCorrect) setCorrectAnswers((prev) => prev + 1);
       }
     } catch (error) {
       console.error("Erro ao registrar resposta:", error);
@@ -360,8 +369,7 @@ function SessionInitPage() {
 
   const finishSession = async () => {
     if (!sessionId) {
-      alert("Sessão finalizada (Modo local).");
-      navigate("/home");
+      setShowObservationModal(true);
       return;
     }
 
@@ -371,12 +379,27 @@ function SessionInitPage() {
 
       await axios.post(`${API_BASE_URL}/task-notebook-session/finish`, { sessionId }, config);
 
-      alert("Sessão Finalizada!");
-      navigate("/home");
+      setShowObservationModal(true);
     } catch (error) {
       alert("Sessão encerrada (com aviso de rede).");
       navigate("/home");
     }
+  };
+
+  const handleSaveObservation = async () => {
+    if (sessionId && observationText.trim()) {
+      try {
+        const token = localStorage.getItem("authToken");
+        await axios.post(
+          `${API_BASE_URL}/task-notebook-session/observation`,
+          { sessionId, observation: observationText.trim() },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (err) {
+        console.error("Erro ao salvar observação:", err);
+      }
+    }
+    navigate("/home");
   };
 
   const handleNextOrFinish = async () => {
@@ -417,6 +440,17 @@ function SessionInitPage() {
         return <ConstructionActivity {...activityProps} />;
     }
   };
+
+  const totalMins = Math.floor(sessionTimeElapsed / 60);
+  const totalSecs = sessionTimeElapsed % 60;
+  const timeLabel = totalMins > 0
+    ? `${totalMins} min${totalSecs > 0 ? ` ${totalSecs} seg` : ""}`
+    : `${totalSecs} segundos`;
+
+  const totalActivities = sessionActivities.length;
+  const accuracyPercent = totalActivities > 0
+    ? Math.round((correctAnswers / totalActivities) * 100)
+    : 0;
 
   return (
     <div className={`dashboard-container ${isBnW ? "session-bw" : ""}`}>
@@ -491,6 +525,54 @@ function SessionInitPage() {
           </div>
         </div>
       </main>
+
+      {showObservationModal && (
+        <div className="session-obs-overlay">
+          <div className="session-obs-modal">
+            <h1 className="session-obs-title">Encerramento da Sessão</h1>
+            <p className="session-obs-subtitle">
+              Registre suas observações clínicas sobre o desempenho do paciente
+            </p>
+
+            <div className="session-obs-summary-card">
+              <h3>Resumo de Desempenho da Sessão</h3>
+              <div className="session-obs-summary-stats">
+                <p>Tempo Total: {timeLabel}</p>
+                <p>Taxa de acerto: {accuracyPercent}%</p>
+                <p>Atividades realizadas: {totalActivities}</p>
+              </div>
+            </div>
+
+            <div className="session-obs-section">
+              <div className="session-obs-section-title">
+                <strong>
+                  Observações da Sessão{" "}
+                  <span className="session-obs-asterisk">*</span>
+                </strong>
+              </div>
+              <textarea
+                className="session-obs-textarea"
+                value={observationText}
+                onChange={(e) => setObservationText(e.target.value)}
+                placeholder="Descreva aqui o comportamento e desempenho do paciente para o histórico clínico. Inclua informações sobre: atenção, participação, dificuldades observadas, progressos, estratégias utilizadas e qualquer aspecto relevante para o acompanhamento terapêutico."
+              />
+            </div>
+
+            <div className="session-obs-actions">
+              <button className="session-obs-btn-skip" onClick={() => navigate("/home")}>
+                Pular
+              </button>
+              <button
+                className="session-obs-btn-save"
+                onClick={handleSaveObservation}
+                disabled={!observationText.trim()}
+              >
+                Salvar Observação
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

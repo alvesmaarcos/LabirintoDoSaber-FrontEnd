@@ -253,6 +253,32 @@
     border: 1px solid #EAF6F6;
 }
 
+/* --- OBSERVAÇÕES --- */
+.report-observation-box {
+    background-color: #fff;
+    border-radius: 35px;
+    padding: 2rem 4rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    margin-top: 1.5rem;
+}
+
+.report-observation-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 1rem 0;
+}
+
+.report-observation-text {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.7;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
 /* --- RESPONSIVIDADE --- */
 @media (max-width: 968px) {
     .metrics-split-layout {
