@@ -1,227 +1,547 @@
-.session-main-content {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    padding: 2.5rem;
-    background-color: #fcfcff;
-}
-
-.session-container {
-    width: 100%;
-    max-width: 1450px;
-    display: flex;
-    flex-direction: column;
-
-}
-
-/* --- ESTILOS DO CABEÇALHO DA SESSÃO --- */
-.session-header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-    padding-left: 2rem; /* Compensar o back-arrow que está fora do h1 */
-}
-
-.session-header-top h1 {
-    font-family: 'Nunito', sans-serif;
-    font-size: 2.25rem;
-    font-weight: 700;
-    margin: 0 20px 0 0;
-    flex-grow: 1;
-}
-
-.back-arrow-link {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    margin-right: 20px;
-}
-
-.back-arrow-icon {
-    width: 44px;
-    height: 44px;
-}
-
-.session-subtitle {
-    font-family: 'Nunito', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #555;
-    margin-bottom: 2rem;
-   margin-right: 90%;
-}
-
-
-
-.patient-card-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 0 2rem;
-    width: 100%;
-}
-
-.patient-list-item-card {
-    display: flex;
-    align-items: center;
-    background-color: #fff;
-    border-radius: 28px;
-    padding: 1rem 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: all 0.2s;
-    flex: 1;
-}
-
-.patient-list-item-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.patient-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    margin-right: 20px;
-}
-
-.patient-card-info {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.patient-card-info h3 {
-    font-family: 'Nunito', sans-serif;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #333;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.patient-card-info p {
-    font-family: 'Nunito', sans-serif;
-    font-size: 0.9rem;
-    color: #666;
-    margin: 2px 0 0 0;
-}
-
-.patient-status {
-    font-size: 0.9rem;
-    color: #008D85;
-    font-weight: 600;
-}
-
-.patient-card-action {
-    display: flex;
-    align-items: center;
-    margin-left: auto;
-    flex-shrink: 0;
-}
-
-.seta {
-    width: 40px;
-    height: 40px;
-    opacity: 0.5;
-    margin-bottom: 15px;
-}
-
-/* --- PAGINAÇÃO (Reutilizado) --- */
-.pagination-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 3rem;
-    gap: 0.5rem;
-}
-
-.page-arrow, .page-number {
-    text-decoration: none;
-    font-family: 'Nunito', sans-serif;
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: #999;
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-    transition: all 0.2s;
-}
-
-.page-number.active {
-    background-color: #63E9E2; /* Cor de destaque da navegação */
-    color: #fff;
-}
-
-
-/* --- ESTILOS GLOBAIS REUTILIZADOS (Você deve ter estes em um arquivo separado) --- */
 .dashboard-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #F5F6FA;
 }
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 2.5rem;
-    background-color: #fff;
-    border-bottom: 1px solid #eaeaea;
+/* ─── Layout principal ─── */
+
+.report-main {
+  flex: 1;
+  padding: 2.5rem 3rem 4rem;
+  max-width: 1300px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
-.nav-link.active {
-    color: #63E9E2;
-    border-bottom: 3px solid #63E9E2;
-}
-/* ... etc. (Seus estilos de logo, navbar, etc.) */
-
-.select-patient {
-    .select-patient {
-    background-color: #F3FBFB;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    border: 1px solid #D8F5F3;
-    border-radius: 50px;
-    padding: 15px 30px;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-
-    width: 100%;
-    max-width: 1200px;   /* ajuste como quiser */
-    margin: 0 auto;      /* centraliza */
+.report-page-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 1.5rem 0;
 }
 
+/* ─── Linha superior com dois cards ─── */
 
+.report-top-row {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+  align-items: stretch;
 }
 
-
-.pagination-controls {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    margin-top: 20px;
+.report-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+  padding: 1.5rem;
 }
 
-/* Remove borda e fundo padrão */
-.pagination-controls button {
-    border: none;
-    background: transparent;
-    font-size: 16px;
-    cursor: pointer;
-    padding: 4px 8px;
+.report-card--search {
+  flex: 3;
+  position: relative;
 }
 
-/* Número ativo – igual ao estilo antigo */
-.pagination-controls .active {
-    font-weight: bold;
-    text-decoration: underline;
+.report-card--period {
+  flex: 2;
 }
 
-/* Seta (< e >) */
-.pagination-controls .page-arrow {
-    font-weight: bold;
-    font-size: 18px;
+/* ─── Títulos dos cards ─── */
+
+.report-card-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 1.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1;
+  overflow: hidden;
+}
+
+.icon-circle--blue   { background-color: #D8F5F3; }
+.icon-circle--gold   { background-color: #FFF6D8; }
+.icon-circle--blue2  { background-color: #E8F4FF; }
+.icon-circle--purple { background-color: #F0E8FF; }
+
+.icon-circle-img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* ─── Busca de aluno ─── */
+
+.student-search-wrapper {
+  position: relative;
+}
+
+.student-search-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1.5px solid #E0E0E0;
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  background: #fff;
+  cursor: text;
+}
+
+.student-search-input-row:focus-within {
+  border-color: #63E9E2;
+  box-shadow: 0 0 0 3px rgba(99, 233, 226, 0.15);
+}
+
+.search-icon-inner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #999;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.search-icon-inner::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 6px;
+  background: #999;
+  bottom: -6px;
+  right: -3px;
+  transform: rotate(45deg);
+  border-radius: 1px;
+}
+
+.student-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  color: #333;
+  background: transparent;
+}
+
+.student-search-input::placeholder {
+  color: #aaa;
+}
+
+.search-chevron {
+  color: #aaa;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* Dropdown list */
+
+.student-dropdown-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  list-style: none;
+  margin: 0;
+  padding: 0.4rem 0;
+  z-index: 100;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.student-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  color: #333;
+  transition: background 0.15s;
+}
+
+.student-dropdown-item:hover {
+  background-color: #F0FFFE;
+}
+
+.student-dropdown-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Aluno selecionado */
+
+.student-selected-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: #E8F9F8;
+  border: 1.5px solid #63E9E2;
+  border-radius: 12px;
+  padding: 1.25rem 1.25rem;
+  margin-top: 0.9rem;
+}
+
+.student-selected-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.student-selected-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.student-selected-name {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.student-selected-meta {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.8rem;
+  color: #555;
+  margin: 0;
+}
+
+.student-selected-check {
+  width: 26px;
+  height: 26px;
+  background-color: #63E9E2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ─── Opções de período ─── */
+
+.period-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.period-option {
+  width: 100%;
+  border: 1.5px solid #E0E0E0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.6rem 1rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #444;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.period-option:hover {
+  border-color: #63E9E2;
+  color: #008D85;
+}
+
+.period-option.active {
+  background-color: #63E9E2;
+  border-color: #63E9E2;
+  color: #fff;
+}
+
+.custom-date-range {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.date-input {
+  flex: 1;
+  border: 1.5px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.82rem;
+  color: #333;
+  outline: none;
+}
+
+.date-input:focus {
+  border-color: #63E9E2;
+}
+
+.date-range-sep {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.82rem;
+  color: #888;
+  flex-shrink: 0;
+}
+
+/* ─── Estado vazio ─── */
+
+.report-empty-state {
+  text-align: center;
+  margin-top: 5rem;
+}
+
+.report-empty-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #555;
+  margin: 0 0 0.5rem 0;
+}
+
+.report-empty-sub {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.88rem;
+  color: #aaa;
+  margin: 0;
+}
+
+/* ─── Cards das seções (baixo) ─── */
+
+.report-section-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.report-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.report-section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.report-section-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.sessions-badge {
+  background-color: #E8F9F8;
+  color: #008D85;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* ─── Lista de sessões (prévia) ─── */
+
+.sessions-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.session-preview-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 8px;
+  background-color: #F5FFFE;
+}
+
+.session-preview-item:hover {
+  background-color: #E8F9F8;
+}
+
+.session-preview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-preview-name {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 3px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-preview-date {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.78rem;
+  color: #999;
+  margin: 0;
+}
+
+.session-preview-score {
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+.session-score-fraction {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #008D85;
+  margin: 0 0 2px 0;
+}
+
+.session-score-pct {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.75rem;
+  color: #008D85;
+  margin: 0;
+}
+
+/* ─── Checkboxes de conteúdo ─── */
+
+.report-content-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.report-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #63E9E2;
+  margin-top: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.checkbox-text {
+  flex: 1;
+}
+
+.checkbox-label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #333;
+  cursor: pointer;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.checkbox-description {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.78rem;
+  color: #999;
+  margin: 0;
+}
+
+/* ─── Botão exportar ─── */
+
+.export-button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.export-pdf-button {
+  background-color: #63E9E2;
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 0.85rem 2.5rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  min-width: 280px;
+}
+
+.export-pdf-button:hover:not(:disabled) {
+  background-color: #45D8D1;
+  transform: translateY(-1px);
+}
+
+.export-pdf-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.export-subtitle {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.78rem;
+  color: #aaa;
+  margin: 0;
+}
+
+/* ─── Textos auxiliares ─── */
+
+.report-loading-text,
+.report-no-data-text {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.88rem;
+  color: #aaa;
+  text-align: center;
+  padding: 1rem 0;
+  margin: 0;
 }
