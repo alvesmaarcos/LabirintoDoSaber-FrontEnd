@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xargs sed:*)"
+      "Bash(xargs sed:*)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(rtk ls *)",
+      "Bash(rtk find *)",
+      "Bash(rtk grep *)",
+      "Bash(rtk read *)"
     ]
   }
 }
