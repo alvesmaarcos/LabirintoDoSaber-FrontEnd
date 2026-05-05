@@ -1,163 +1,474 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./style.css";
 import Navbar from "../../components/ui/NavBar/index.js";
-import patientAvatar from "../../assets/images/icon_random.png";
-import iconSeta from "../../assets/images/seta_icon.png";
-import SearchBar from "../../components/ui/SearchBar/Search";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import PageTurner from "../../components/ui/PageTurner/index.js";
+import { pdf } from "@react-pdf/renderer";
+import ReportPDF from "./ReportPDF";
+import patientAvatar from "../../assets/images/icon_random.png";
+import iconCalendario from "../../assets/images/icon-calendario.png";
+import iconCheckbox from "../../assets/images/icon-checkbox.png";
+import iconDocumento from "../../assets/images/icon-documento.png";
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
+const PERIODS = [
+  { id: "last3", label: "Últimas 3 sessões", limit: 3 },
+  { id: "last6", label: "Últimas 6 sessões", limit: 6 },
+  { id: "all", label: "Todas as sessões", limit: null },
+  { id: "custom", label: "Período Personalizado", limit: null },
+];
+
+const MONTHS = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
+
+function formatDate(isoStr) {
+  if (!isoStr) return "";
+  const d = new Date(isoStr);
+  return `${d.getDate()} de ${MONTHS[d.getMonth()]} de ${d.getFullYear()}`;
+}
 
 function MainReport() {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dropdownRef = useRef(null);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const patientsPerPage = 3;
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [allStudents, setAllStudents] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedPeriod, setSelectedPeriod] = useState("last3");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+  const [analysisData, setAnalysisData] = useState(null);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [includeMetrics, setIncludeMetrics] = useState(true);
+  const [includeObservations, setIncludeObservations] = useState(true);
+  const [includeAnamnese, setIncludeAnamnese] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
 
   useEffect(() => {
     const fetchStudents = async () => {
       try {
         const educatorId = localStorage.getItem("userId");
         const token = localStorage.getItem("authToken");
-
         if (!educatorId || !token) {
           navigate("/");
           return;
         }
 
-        const config = {
+        const res = await axios.get(`${API_BASE_URL}/student/`, {
           headers: { Authorization: `Bearer ${token}` },
-        };
-
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/student/`,
-          config
-        );
-
-        let allStudents = [];
-
-        if (Array.isArray(response.data)) {
-          allStudents = response.data;
-        } else if (response.data && Array.isArray(response.data.students)) {
-          allStudents = response.data.students;
-        }
-
-        const myStudents = allStudents.filter(
-          (s) => String(s.educatorId) === String(educatorId)
-        );
-
-        const mappedPatients = myStudents.map((s) => ({
-          id: s.id,
-          name: s.name,
-          age: s.age,
-          photoUrl: s.photoUrl,
-          status: s.learningTopics?.[0] || "Sem tópico definido",
-        }));
-
-        setPatients(mappedPatients);
-        setLoading(false);
-      } catch (error) {
-        console.error("Erro ao buscar estudantes:", error);
-        setLoading(false);
+        });
+        const all = Array.isArray(res.data)
+          ? res.data
+          : (res.data?.students ?? []);
+        const mine = all
+          .filter((s) => String(s.educatorId) === String(educatorId))
+          .map((s) => ({
+            id: s.id,
+            name: s.name,
+            age: s.age,
+            photoUrl: s.photoUrl,
+          }));
+        setAllStudents(mine);
+      } catch (err) {
+        console.error("Erro ao buscar alunos:", err);
       }
     };
-
     fetchStudents();
   }, [navigate]);
 
-  const handlePatientClick = (patientId) => {
-    navigate("/ReportPacient", { state: { patientId } });
+  useEffect(() => {
+    if (!selectedStudent) return;
+    if (selectedPeriod === "custom" && (!customStartDate || !customEndDate))
+      return;
+
+    const fetchAnalysis = async () => {
+      setLoadingAnalysis(true);
+      try {
+        const token = localStorage.getItem("authToken");
+        const params = {};
+        const period = PERIODS.find((p) => p.id === selectedPeriod);
+        if (period?.limit) {
+          params.limit = period.limit;
+        } else if (selectedPeriod === "custom") {
+          params.startDate = new Date(customStartDate).toISOString();
+          params.endDate = new Date(customEndDate + "T23:59:59").toISOString();
+        }
+
+        const res = await axios.get(
+          `${API_BASE_URL}/task-notebook-session/analysis/student/${selectedStudent.id}`,
+          { headers: { Authorization: `Bearer ${token}` }, params },
+        );
+        setAnalysisData(res.data);
+      } catch (err) {
+        console.error("Erro ao buscar análise:", err);
+      } finally {
+        setLoadingAnalysis(false);
+      }
+    };
+
+    fetchAnalysis();
+  }, [selectedStudent, selectedPeriod, customStartDate, customEndDate]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredStudents = allStudents.filter((s) =>
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const handleSelectStudent = (student) => {
+    if (selectedStudent?.id === student.id) {
+      setDropdownOpen(false);
+      return;
+    }
+    setSelectedStudent(student);
+    setSearchTerm(student.name);
+    setDropdownOpen(false);
+    setAnalysisData(null);
   };
 
-  const filteredPatients = patients.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
-  const startIndex = (currentPage - 1) * patientsPerPage;
-  const currentPatients = filteredPatients.slice(
-    startIndex,
-    startIndex + patientsPerPage
-  );
-
-  const changePage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchTerm(val);
+    setDropdownOpen(true);
+    if (selectedStudent && val !== selectedStudent.name) {
+      setSelectedStudent(null);
+      setAnalysisData(null);
     }
   };
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
+  const handleExportPDF = async () => {
+    if (!selectedStudent || !analysisData) return;
+    setExportingPDF(true);
+    try {
+      const sessions = analysisData.sessions ?? [];
+      const blob = await pdf(
+        <ReportPDF
+          student={selectedStudent}
+          analysisData={analysisData}
+          sessions={sessions}
+          includeMetrics={includeMetrics}
+          includeObservations={includeObservations}
+        />,
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `relatorio-${selectedStudent.name}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Erro ao gerar PDF:", err);
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
+  const sessions = analysisData?.sessions ?? [];
+  const sessionCount = sessions.length;
 
   return (
     <div className="dashboard-container">
-      <Navbar />
+      <Navbar activePage="relatorios" />
 
-      <main className="session-main-content">
-        <div className="session-container">
-          <div className="session-header-top">
-            <h1>Relatórios</h1>
+      <main className="report-main">
+        <h1 className="report-page-title">Gerar Relatório</h1>
 
-            <div className="search-filter-group">
-              <SearchBar
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                placeholder="Selecione o paciente..."
-              />
+        <div className="report-top-row">
+          {/* Card 1: Buscar Aluno */}
+          <div className="report-card report-card--search" ref={dropdownRef}>
+            <h2 className="report-card-title">
+              <span className="icon-circle icon-circle--blue">👤</span>
+              1. Buscar Aluno
+            </h2>
+
+            <div className="student-search-wrapper">
+              <div
+                className="student-search-input-row"
+                onClick={() => {
+                  if (!dropdownOpen) setDropdownOpen(true);
+                }}
+              >
+                <span className="search-icon-inner" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  onFocus={() => setDropdownOpen(true)}
+                  placeholder="Digite o nome do aluno..."
+                  className="student-search-input"
+                />
+                <span className="search-chevron">&#9662;</span>
+              </div>
+
+              {dropdownOpen && filteredStudents.length > 0 && (
+                <ul className="student-dropdown-list">
+                  {filteredStudents.map((s) => (
+                    <li
+                      key={s.id}
+                      className="student-dropdown-item"
+                      onMouseDown={() => handleSelectStudent(s)}
+                    >
+                      <img
+                        src={s.photoUrl || patientAvatar}
+                        alt=""
+                        className="student-dropdown-avatar"
+                        onError={(e) => {
+                          e.currentTarget.src = patientAvatar;
+                        }}
+                      />
+                      <span>{s.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          </div>
 
-          <div className="select-patient">
-            <h2 className="session-subtitle">Pacientes</h2>
-
-            {loading ? (
-              <p>Carregando...</p>
-            ) : (
-              <div className="patient-card-list">
-                {currentPatients.map((patient) => (
-                  <div
-                    key={patient.id}
-                    className="patient-list-item-card"
-                    onClick={() => handlePatientClick(patient.id)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <img
-                      src={patient.photoUrl || patientAvatar}
-                      alt={`Avatar de ${patient.name}`}
-                      className="patient-avatar"
-                      onError={(e) => {
-                        e.currentTarget.src = patientAvatar;
-                      }}
-                    />
-                    <div className="patient-card-info">
-                      <h3>{patient.name}</h3>
-                      <p>{patient.age} anos</p>
-                      <p className="patient-status">{patient.status}</p>
-                    </div>
-
-                    <div className="patient-card-action">
-                      <img src={iconSeta} alt="Avançar" className="seta" />
-                    </div>
-                  </div>
-                ))}
-
-                {currentPatients.length === 0 && (
-                  <p>Nenhum paciente encontrado.</p>
-                )}
+            {selectedStudent && (
+              <div className="student-selected-card">
+                <img
+                  src={selectedStudent.photoUrl || patientAvatar}
+                  alt={selectedStudent.name}
+                  className="student-selected-avatar"
+                  onError={(e) => {
+                    e.currentTarget.src = patientAvatar;
+                  }}
+                />
+                <div className="student-selected-info">
+                  <p className="student-selected-name">
+                    {selectedStudent.name}
+                  </p>
+                  <p className="student-selected-meta">
+                    {selectedStudent.age} anos
+                    {analysisData && ` • ${sessionCount} sessões registradas`}
+                  </p>
+                </div>
+                <span className="student-selected-check">&#10003;</span>
               </div>
             )}
+          </div>
 
-            <PageTurner
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={changePage}
-            />
+          {/* Card 2: Período */}
+          <div className="report-card report-card--period">
+            <h2 className="report-card-title">
+              <span className="icon-circle icon-circle--gold">
+                <img src={iconCalendario} alt="" className="icon-circle-img" />
+              </span>
+              2. Período
+            </h2>
+
+            <div className="period-options">
+              {PERIODS.map((p) => (
+                <button
+                  key={p.id}
+                  className={`period-option${selectedPeriod === p.id ? " active" : ""}`}
+                  onClick={() => setSelectedPeriod(p.id)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {selectedPeriod === "custom" && (
+              <div className="custom-date-range">
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="date-input"
+                />
+                <span className="date-range-sep">até</span>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="date-input"
+                />
+              </div>
+            )}
           </div>
         </div>
+
+        {!selectedStudent && (
+          <div className="report-empty-state">
+            <p className="report-empty-title">Busque um aluno para começar</p>
+            <p className="report-empty-sub">
+              Use o campo de busca acima para encontrar o aluno
+            </p>
+          </div>
+        )}
+
+        {selectedStudent && (
+          <>
+            {/* Prévia das Sessões */}
+            <div className="report-section-card">
+              <div className="report-section-header">
+                <div className="report-section-title-row">
+                  <span className="icon-circle icon-circle--blue2">
+                    <img src={iconDocumento} alt="" className="icon-circle-img" />
+                  </span>
+                  <h2 className="report-section-title">
+                    Prévia das Sessões Incluídas
+                  </h2>
+                </div>
+                <span className="sessions-badge">
+                  {sessionCount} {sessionCount === 1 ? "sessão" : "sessões"}
+                </span>
+              </div>
+
+              {loadingAnalysis ? (
+                <p className="report-loading-text">Carregando sessões...</p>
+              ) : sessions.length === 0 ? (
+                <p className="report-no-data-text">
+                  Nenhuma sessão encontrada para o período selecionado.
+                </p>
+              ) : (
+                <ul className="sessions-preview-list">
+                  {sessions.map((session) => {
+                    const total = session.answers?.length ?? 0;
+                    const correct =
+                      session.answers?.filter((a) => a.isCorrect).length ?? 0;
+                    const accuracy =
+                      total > 0 ? Math.round((correct / total) * 100) : 0;
+                    return (
+                      <li
+                        key={session.id}
+                        className="session-preview-item"
+                        onClick={() =>
+                          navigate("/ReportSession", {
+                            state: { sessionId: session.id },
+                          })
+                        }
+                      >
+                        <div className="session-preview-info">
+                          <p className="session-preview-name">{session.name}</p>
+                          <p className="session-preview-date">
+                            {formatDate(session.startedAt)}
+                          </p>
+                        </div>
+                        <div className="session-preview-score">
+                          <p className="session-score-fraction">
+                            {correct}/{total}
+                          </p>
+                          <p className="session-score-pct">
+                            {accuracy}% acerto
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+
+            {/* Conteúdo do Relatório */}
+            <div className="report-section-card">
+              <div
+                className="report-section-title-row"
+                style={{ marginBottom: "1.25rem" }}
+              >
+                <span className="icon-circle icon-circle--purple">
+                  <img src={iconCheckbox} alt="" className="icon-circle-img" />
+                </span>
+                <h2 className="report-section-title">
+                  3. Conteúdo do Relatório
+                </h2>
+              </div>
+
+              <ul className="report-content-options">
+                <li className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    id="cb-metrics"
+                    checked={includeMetrics}
+                    onChange={(e) => setIncludeMetrics(e.target.checked)}
+                    className="report-checkbox"
+                  />
+                  <div className="checkbox-text">
+                    <label htmlFor="cb-metrics" className="checkbox-label">
+                      Métricas de Desempenho
+                    </label>
+                    <p className="checkbox-description">
+                      Inclui gráficos de progresso, taxa de acertos e
+                      estatísticas gerais
+                    </p>
+                  </div>
+                </li>
+                <li className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    id="cb-observations"
+                    checked={includeObservations}
+                    onChange={(e) => setIncludeObservations(e.target.checked)}
+                    className="report-checkbox"
+                  />
+                  <div className="checkbox-text">
+                    <label htmlFor="cb-observations" className="checkbox-label">
+                      Observações Qualitativas
+                    </label>
+                    <p className="checkbox-description">
+                      Anotações e observações registradas durante as sessões
+                    </p>
+                  </div>
+                </li>
+                <li className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    id="cb-anamnese"
+                    checked={includeAnamnese}
+                    onChange={(e) => setIncludeAnamnese(e.target.checked)}
+                    className="report-checkbox"
+                  />
+                  <div className="checkbox-text">
+                    <label htmlFor="cb-anamnese" className="checkbox-label">
+                      Dados da Anamnese
+                    </label>
+                    <p className="checkbox-description">
+                      Informações gerais, histórico médico e desenvolvimento do
+                      aluno
+                    </p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            {/* Exportar PDF */}
+            <div className="export-button-container">
+              <button
+                className="export-pdf-button"
+                onClick={handleExportPDF}
+                disabled={exportingPDF || loadingAnalysis}
+              >
+                &#8659;&nbsp;&nbsp;
+                {exportingPDF ? "Gerando PDF..." : "Exportar Relatório em PDF"}
+              </button>
+              <p className="export-subtitle">
+                Relatório de {selectedStudent.name}
+              </p>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
