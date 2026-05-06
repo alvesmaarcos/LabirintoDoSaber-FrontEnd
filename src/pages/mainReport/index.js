@@ -143,7 +143,7 @@ function MainReport() {
       return;
     }
     setSelectedStudent(student);
-    setSearchTerm(student.name);
+    setSearchTerm("");
     setDropdownOpen(false);
     setAnalysisData(null);
   };
@@ -216,7 +216,7 @@ function MainReport() {
                   value={searchTerm}
                   onChange={handleSearchChange}
                   onFocus={() => setDropdownOpen(true)}
-                  placeholder="Digite o nome do aluno..."
+                  placeholder={selectedStudent ? selectedStudent.name : "Digite o nome do aluno..."}
                   className="student-search-input"
                 />
                 <span className="search-chevron">&#9662;</span>
@@ -453,19 +453,30 @@ function MainReport() {
               </ul>
             </div>
 
-            {/* Exportar PDF */}
+			{/* Exportar PDF */}
             <div className="export-button-container">
               <button
                 className="export-pdf-button"
                 onClick={handleExportPDF}
                 disabled={exportingPDF || loadingAnalysis}
               >
-                &#8659;&nbsp;&nbsp;
-                {exportingPDF ? "Gerando PDF..." : "Exportar Relatório em PDF"}
+                <span className="export-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </span>
+                
+                <div className="export-text-group">
+                  <span className="export-main-text">
+                    {exportingPDF ? "Gerando PDF..." : "Exportar Relatório em PDF"}
+                  </span>
+                  <span className="export-sub-text">
+                    Relatório de {selectedStudent.name}
+                  </span>
+                </div>
               </button>
-              <p className="export-subtitle">
-                Relatório de {selectedStudent.name}
-              </p>
             </div>
           </>
         )}
