@@ -572,6 +572,76 @@
 
 /* ─── Textos auxiliares ─── */
 
+/* ─── Modal sem sessões ─── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 2.5rem 2rem 2rem;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.modal-icon {
+  width: 56px;
+  height: 56px;
+  background-color: #FFF6D8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  font-size: 1.75rem;
+}
+
+.modal-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 0.6rem 0;
+}
+
+.modal-description {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.88rem;
+  color: #777;
+  margin: 0 0 1.75rem 0;
+  line-height: 1.5;
+}
+
+.modal-confirm-btn {
+  background-color: #63E9E2;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.7rem 2.5rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.modal-confirm-btn:hover {
+  background-color: #52D1CA;
+  transform: translateY(-1px);
+}
+
+/* ─── Textos auxiliares ─── */
+
 .report-loading-text,
 .report-no-data-text {
   font-family: 'Nunito', sans-serif;

@@ -57,6 +57,7 @@ function MainReport() {
   const [includeObservations, setIncludeObservations] = useState(true);
   const [includeAnamnese, setIncludeAnamnese] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [showNoSessionsModal, setShowNoSessionsModal] = useState(false);
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -160,9 +161,13 @@ function MainReport() {
 
   const handleExportPDF = async () => {
     if (!selectedStudent || !analysisData) return;
+    const sessions = analysisData.sessions ?? [];
+    if (sessions.length === 0) {
+      setShowNoSessionsModal(true);
+      return;
+    }
     setExportingPDF(true);
     try {
-      const sessions = analysisData.sessions ?? [];
       const blob = await pdf(
         <ReportPDF
           student={selectedStudent}
@@ -481,6 +486,26 @@ function MainReport() {
           </>
         )}
       </main>
+
+      {showNoSessionsModal && (
+        <div className="modal-overlay" onClick={() => setShowNoSessionsModal(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon">📋</div>
+            <p className="modal-title">Nenhuma sessão encontrada</p>
+            <p className="modal-description">
+              Este aluno não possui sessões registradas para o período
+              selecionado. Escolha um período diferente ou aguarde a realização
+              de sessões.
+            </p>
+            <button
+              className="modal-confirm-btn"
+              onClick={() => setShowNoSessionsModal(false)}
+            >
+              Ok
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
