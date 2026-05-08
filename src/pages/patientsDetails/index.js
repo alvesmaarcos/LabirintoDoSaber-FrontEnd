@@ -2,58 +2,150 @@ import React, { useState, useEffect } from "react";
 import "./style.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import { pdf } from "@react-pdf/renderer";
 import Navbar from "../../components/ui/NavBar/index.js";
+import ReportPDF from "../mainReport/ReportPDF.js";
 import iconRandom from "../../assets/images/icon_random.png";
-import edit from "../../assets/images/edit.png";
+import editIcon from "../../assets/images/edit.png";
 import seta from "../../assets/images/seta_icon_esquerda.png";
+import calendarIcon from "../../assets/images/icon-calendario.png";
+import docIcon from "../../assets/images/icon-documento.png";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
-const SubProgressItem = ({ category, percentage }) => (
-  <div className="sub-progress-item">
-    <p>{category}</p>
-    <span>{percentage}%</span>
-  </div>
-);
+const CATEGORY_LABELS = {
+  Reading: "Leitura",
+  Writing: "Escrita",
+  Vocabulary: "Vocabulário",
+  Comprehension: "Compreensão",
+  reading: "Leitura",
+  writing: "Escrita",
+  vocabulary: "Vocabulário",
+  comprehension: "Compreensão",
+};
 
-const HistoryRow = ({ activityName, date, status }) => {
-  const formattedDate = date
-    ? new Date(date).toLocaleDateString("pt-BR", { timeZone: "UTC" })
-    : "Data Indisp.";
+function mapGender(gender) {
+  if (!gender) return null;
+  const g = String(gender).toLowerCase();
+  if (g === "male" || g === "m") return "Masculino";
+  if (g === "female" || g === "f") return "Feminino";
+  return gender;
+}
+
+function formatDate(isoStr) {
+  if (!isoStr) return "—";
+  const d = new Date(isoStr);
+  return d.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+}
+
+function formatDateTime(isoStr) {
+  if (!isoStr) return "—";
+  const d = new Date(isoStr);
+  const months = [
+    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+  ];
+  return `${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
+}
+
+function sessionDurationMinutes(startedAt, finishedAt) {
+  if (!startedAt || !finishedAt) return null;
+  const diff = new Date(finishedAt) - new Date(startedAt);
+  return Math.round(diff / 60000);
+}
+
+function CategoryBar({ category, accuracy }) {
+  const pct = Math.round((accuracy || 0) * 100);
+  const label = CATEGORY_LABELS[category] || category;
+  return (
+    <div className="category-bar-row">
+      <span className="category-label">{label}</span>
+      <div className="category-bar-track">
+        <div className="category-bar-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="category-pct">{pct}%</span>
+    </div>
+  );
+}
+
+function SessionCard({ session }) {
+  const answers = Array.isArray(session.answers) ? session.answers : [];
+  const totalAnswers = answers.length;
+  const correctAnswers = answers.filter((a) => a.isCorrect).length;
+  const durationMin = sessionDurationMinutes(session.startedAt, session.finishedAt);
+  const name = session.name || session.sessionName || session.activityName || "Sessão";
 
   return (
-    <tr>
-      <td>
-        <span className="btn-tag tag-atividade">{activityName}</span>
-      </td>
-      <td>{formattedDate}</td>
-      <td>
-        <span
-          className="btn-tag"
-          style={{
-            backgroundColor: status === "Pendente" ? "#FFECB3" : "#C8E6C9",
-            color: status === "Pendente" ? "#FFA000" : "#388E3C",
-          }}
-        >
-          {status}
-        </span>
-      </td>
-    </tr>
+    <div className="session-card">
+      <div className="session-card-left">
+        <img src={calendarIcon} alt="sessão" className="session-icon" />
+        <div>
+          <p className="session-name">{name}</p>
+          <p className="session-date">{formatDateTime(session.startedAt || session.date || session.createdAt)}</p>
+        </div>
+      </div>
+      <div className="session-card-right">
+        {totalAnswers > 0 && (
+          <span className="session-acertos">{correctAnswers}/{totalAnswers} acertos</span>
+        )}
+        {durationMin != null && (
+          <span className="session-time">{durationMin} min</span>
+        )}
+      </div>
+    </div>
   );
-};
+}
+
+function snapshotToAnalysisData(snapshot) {
+  const categoriesObj = {};
+  (snapshot.categories || []).forEach((c) => {
+    categoriesObj[c.category.toLowerCase()] = c;
+  });
+  return {
+    categories: categoriesObj,
+    total: {
+      total: snapshot.totalQuestions || 0,
+      correct: snapshot.totalCorrect || 0,
+      accuracy: snapshot.accuracy || 0,
+    },
+  };
+}
+
+function AnalysisReportCard({ report, student, onDownload, downloading }) {
+  const pct = Math.round((report.accuracy || 0) * 100);
+  return (
+    <div className="doc-item">
+      <img src={docIcon} alt="relatório" className="doc-icon-img" />
+      <div className="doc-info">
+        <strong className="doc-title">Relatório Pedagógico</strong>
+        <small className="doc-date">{formatDate(report.generatedAt)}</small>
+      </div>
+      <span className="doc-accuracy">{pct}% acertos • {report.totalQuestions || 0} questões</span>
+      <button
+        className="doc-download-btn"
+        onClick={() => onDownload(report)}
+        disabled={downloading}
+        title="Baixar PDF"
+      >
+        {downloading ? "…" : "↓"}
+      </button>
+    </div>
+  );
+}
 
 function AlunoDetalhe() {
   const navigate = useNavigate();
   const location = useLocation();
-
   const studentId = location.state?.studentId;
 
   const [studentDetails, setStudentDetails] = useState(null);
   const [educatorDetails, setEducatorDetails] = useState(null);
   const [progressData, setProgressData] = useState([]);
-  const [historyData, setHistoryData] = useState([]);
-  const [overallCompletionRate, setOverallCompletionRate] = useState(0);
+  const [sessions, setSessions] = useState([]);
+  const [analysisHistory, setAnalysisHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("progresso");
+  const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
     if (!studentId) {
@@ -63,112 +155,103 @@ function AlunoDetalhe() {
       return;
     }
 
-    const fetchStudentData = async () => {
+    const fetchAll = async () => {
       try {
         const token = localStorage.getItem("authToken");
         const config = { headers: { Authorization: `Bearer ${token}` } };
 
-        const educatorRes = await axios.get(
-          `${API_BASE_URL}/educator/me`,
-          config
-        );
+        // GET /analysis — tempo real, sem persistir. Traz categories + sessions completas.
+        // GET /history  — lista snapshots já salvos (aba Documentos).
+        const [educatorRes, studentRes, analysisRes, historyRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/educator/me`, config),
+          axios.get(`${API_BASE_URL}/student`, config),
+          axios.get(`${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}`, config),
+          axios.get(`${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}/history`, config),
+        ]);
+
         const educatorData = educatorRes.data || {};
-
         setEducatorDetails({
-          name:
-            educatorData.name ||
-            educatorData.fullName ||
-            educatorData.username ||
-            "Profissional responsável",
-          photoUrl: educatorData.photoUrl || educatorData._photoUrl || "",
+          name: educatorData.name || educatorData.fullName || educatorData.username || "Profissional responsável",
+          photoUrl: educatorData.photoUrl || "",
         });
-
-        const studentRes = await axios.get(`${API_BASE_URL}/student`, config);
 
         const list = Array.isArray(studentRes.data)
           ? studentRes.data
-          : studentRes.data.students || [];
-
-        const studentData = list.find(
-          (s) => String(s.id) === String(studentId)
-        );
-
+          : studentRes.data?.students || [];
+        const studentData = list.find((s) => String(s.id) === String(studentId));
         if (!studentData) {
-          setIsLoading(false);
           alert("Aluno não encontrado.");
+          setIsLoading(false);
           return;
         }
+        setStudentDetails(studentData);
 
-        setStudentDetails({
-          id: studentData.id,
-          name: studentData.name,
-          age: studentData.age,
-          learningTopics: studentData.learningTopics,
-          photoUrl: studentData.photoUrl,
-        });
-
-        const analysisRes = await axios.get(
-          `${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}`,
-          config
-        );
-
-        const reportData = analysisRes.data || {};
-        const categoriesObj = reportData.categories || {};
-        const categoriesArray = Object.values(categoriesObj);
-
-        const categoriesWithProgress = categoriesArray.filter(
-          (item) => (item.accuracy || 0) > 0
-        );
-
-        let totalAccuracy = 0;
-        if (categoriesWithProgress.length > 0) {
-          const sumAccuracy = categoriesWithProgress.reduce(
-            (sum, item) => sum + (item.accuracy || 0),
-            0
-          );
-          totalAccuracy = Math.round(
-            (sumAccuracy / categoriesWithProgress.length) * 100
-          );
-        }
-
-        if (totalAccuracy < 0) totalAccuracy = 0;
-        if (totalAccuracy > 100) totalAccuracy = 100;
-
+        // Barras de progresso — dados em tempo real do GET
+        const analysisData = analysisRes.data || {};
+        const categoriesRaw = analysisData.categories || {};
+        const categoriesArray = Array.isArray(categoriesRaw)
+          ? categoriesRaw
+          : Object.values(categoriesRaw);
         setProgressData(categoriesArray);
-        setOverallCompletionRate(totalAccuracy);
 
-        const sessionsRes = await axios.get(
-          `${API_BASE_URL}/task-notebook-session/student/${studentId}`,
-          config
+        // Sessões do GET (já têm answers completas para calcular acertos)
+        const sessionsRaw = Array.isArray(analysisData.sessions) ? analysisData.sessions : [];
+        const sorted = [...sessionsRaw].sort(
+          (a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0)
         );
+        setSessions(sorted.slice(0, 10));
 
-        const sessionsRaw = Array.isArray(sessionsRes.data)
-          ? sessionsRes.data
-          : sessionsRes.data.sessions || [];
-
-        const sortedSessions = [...sessionsRaw].sort(
-          (a, b) =>
-            new Date(b.startedAt || b.date || b.createdAt) -
-            new Date(a.startedAt || a.date || a.createdAt)
-        );
-
-        setHistoryData(sortedSessions.slice(0, 10));
-      } catch (error) {
-        alert("Erro ao carregar dados.");
+        // Histórico de snapshots salvos — aba Documentos
+        setAnalysisHistory(Array.isArray(historyRes.data) ? historyRes.data : []);
+      } catch {
+        alert("Erro ao carregar dados do aluno.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchStudentData();
+    fetchAll();
   }, [studentId, navigate]);
+
+  const handleDownloadReport = async (report) => {
+    if (downloadingId) return;
+    setDownloadingId(report.id);
+    try {
+      const analysisData = snapshotToAnalysisData(report);
+      const blob = await pdf(
+        <ReportPDF
+          student={studentDetails}
+          analysisData={analysisData}
+          sessions={[]}
+          includeMetrics={true}
+          includeObservations={false}
+        />
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Relatorio_${studentDetails?.name || "aluno"}_${formatDate(report.generatedAt)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Erro ao gerar PDF:", err);
+      alert("Não foi possível gerar o PDF.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleGerarRelatorio = () => {
+    navigate("/MainReport", { state: { preSelectedStudentId: studentId } });
+  };
 
   if (isLoading) {
     return (
       <div className="aluno-detalhe-container">
-        <h1 style={{ textAlign: "center", marginTop: "50px" }}>
+        <Navbar activePage="students" />
+        <p style={{ textAlign: "center", marginTop: "4rem", color: "#888" }}>
           Carregando detalhes do aluno...
-        </h1>
+        </p>
       </div>
     );
   }
@@ -176,184 +259,172 @@ function AlunoDetalhe() {
   if (!studentDetails) {
     return (
       <div className="aluno-detalhe-container">
-        <h1 style={{ textAlign: "center", marginTop: "50px" }}>
+        <Navbar activePage="students" />
+        <p style={{ textAlign: "center", marginTop: "4rem", color: "#888" }}>
           Aluno não encontrado.
-        </h1>
-        <button
-          onClick={() => navigate("/alunos")}
-          style={{
-            padding: "10px 20px",
-            marginTop: "20px",
-            backgroundColor: "#4A90E2",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Voltar
-        </button>
+        </p>
       </div>
     );
   }
 
-  const { name, age, learningTopics, photoUrl } = studentDetails;
-  const firstTopic = Array.isArray(learningTopics)
-    ? learningTopics[0]
-    : learningTopics;
-
+  const { name, age, dateOfBirth, birthDate, gender, road, housenumber, learningTopics, photoUrl } = studentDetails;
+  const genderLabel = mapGender(gender);
   const educatorName = educatorDetails?.name || "Profissional responsável";
-  const educatorPhotoUrl = educatorDetails?.photoUrl || "";
+  const address = [road, housenumber].filter(Boolean).join(", ");
+  const topicsText = Array.isArray(learningTopics) ? learningTopics.join(", ") : learningTopics || "Sem objetivo definido";
+  const birthDateDisplay = dateOfBirth || birthDate ? formatDate(dateOfBirth || birthDate) : null;
+
+  // progressData vem do GET /analysis (tempo real, sem persistir)
+  const progressCategories = progressData;
 
   return (
     <div className="aluno-detalhe-container">
       <Navbar activePage="students" />
 
       <main className="main-content-detalhe">
-        <div className="back-arrow-container">
+
+        <div className="perfil-header-row">
           <button onClick={() => navigate(-1)} className="back-arrow-button">
-            <img src={seta} alt="seta" className="seta" />
+            <img src={seta} alt="voltar" className="seta" />
           </button>
+          <div className="perfil-header-title">
+            <h1>Perfil do Aluno</h1>
+            <p className="perfil-subtitle">Informações detalhadas e acompanhamento.</p>
+          </div>
+          <div className="perfil-header-actions">
+            <button className="btn-gerar-relatorio" onClick={handleGerarRelatorio}>
+              <img src={docIcon} alt="" className="btn-icon" />
+              Gerar Relatório
+            </button>
+            <button
+              className="btn-editar-perfil"
+              onClick={() => navigate("/EditStudent", { state: { studentId } })}
+            >
+              <img src={editIcon} alt="" className="btn-icon" />
+              Editar Perfil
+            </button>
+          </div>
         </div>
 
-        <div className="info-card">
-          <div className="info-section">
+        <div className="info-card-expanded">
+          <div className="info-card-top">
             <img
               src={photoUrl || iconRandom}
               alt={name}
-              className="avatar-grande1"
+              className="avatar-grande"
+              onError={(e) => { e.currentTarget.src = iconRandom; }}
             />
-            <div className="info-text1">
-              <h3>{name}</h3>
-              <p>{age || "?"} anos</p>
-              <p>{firstTopic || "Sem área definida"}</p>
+            <div className="info-card-main">
+              <h2 className="aluno-nome">{name}</h2>
+              <p className="aluno-meta">{age} anos{genderLabel ? ` • ${genderLabel}` : ""}</p>
             </div>
           </div>
 
-          <div className="vertical-divider"></div>
-
-          <div className="info-section">
-            <img
-              src={educatorPhotoUrl || iconRandom}
-              alt={educatorName}
-              className="avatar-grande2"
-              style={{ objectFit: "cover" }}
-            />
-            <div className="info-text2">
-              <h3>{educatorName}</h3>
-              <p>Profissional responsável</p>
+          <div className="info-card-details">
+            {birthDateDisplay && (
+              <div className="info-detail-item">
+                <span className="info-detail-label">Data de Nascimento</span>
+                <span className="info-detail-value">{birthDateDisplay}</span>
+              </div>
+            )}
+            <div className="info-detail-item">
+              <span className="info-detail-label">Profissional Responsável</span>
+              <span className="info-detail-value">{educatorName}</span>
+            </div>
+            {address && (
+              <div className="info-detail-item info-detail-full">
+                <span className="info-detail-label">Endereço</span>
+                <span className="info-detail-value">{address}</span>
+              </div>
+            )}
+            <div className="info-detail-item info-detail-full">
+              <span className="info-detail-label">Objetivo de Acompanhamento</span>
+              <span className="info-detail-value">{topicsText}</span>
             </div>
           </div>
-
-          <button
-            onClick={() => navigate("/EditStudent", { state: { studentId } })}
-            className="btn-tag btn-editar"
-          >
-            <img src={edit} alt="edit" className="iconEdit" />
-            Editar perfil
-          </button>
         </div>
 
-        <div className="progress-card">
-          <h2>Progresso Detalhado</h2>
-          <p className="subtitle">Atividades concluídas</p>
-
-          {historyData.length === 0 ? (
-            <div
-              style={{
-                textAlign: "center",
-                color: "#999",
-                fontSize: "1.2rem",
-                padding: "2rem 0",
-                fontWeight: 500,
-              }}
+        <div className="tab-bar">
+          {["progresso", "documentos", "anamnese"].map((tab) => (
+            <button
+              key={tab}
+              className={`tab-btn${activeTab === tab ? " tab-btn-active" : ""}`}
+              onClick={() => setActiveTab(tab)}
             >
-              Nenhuma sessão realizada.
-            </div>
-          ) : (
-            <>
-              <div className="progress-main-container">
-                <div className="progress-bar-main">
-                  <div
-                    className="progress-bar-inner"
-                    style={{ width: `${overallCompletionRate}%` }}
-                  ></div>
-                </div>
-                <span className="progress-percent-main">
-                  {overallCompletionRate}%
-                </span>
-              </div>
-
-              <div className="sub-progress-container">
-                {progressData.length > 0 ? (
-                  progressData.map((item, index) => (
-                    <SubProgressItem
-                      key={index}
-                      category={(() => {
-                        if (item.category === "reading") return "Leitura";
-                        if (item.category === "writing") return "Escrita";
-                        if (item.category === "vocabulary")
-                          return "Vocabulário";
-                        if (item.category === "comprehension")
-                          return "Compreensão";
-                        return item.category;
-                      })()}
-                      percentage={Math.round((item.accuracy || 0) * 100)}
-                    />
-                  ))
-                ) : (
-                  <p style={{ textAlign: "center", color: "#999" }}>
-                    Dados de progresso indisponíveis.
-                  </p>
-                )}
-              </div>
-            </>
-          )}
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
         </div>
 
-        <div className="history-card">
-          <h2>Histórico de atividades</h2>
-
-          <table className="history-table">
-            <thead>
-              <tr>
-                <th>Atividade</th>
-                <th>Data</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {historyData.length > 0 ? (
-                historyData.map((session, index) => (
-                  <HistoryRow
-                    key={index}
-                    activityName={
-                      session.sessionName || session.activityName || "Sessão"
-                    }
-                    date={
-                      session.startedAt || session.date || session.createdAt
-                    }
-                    status={
-                      session.status ||
-                      (session.finishedAt || session.isFinished
-                        ? "Concluído"
-                        : "Pendente")
-                    }
-                  />
-                ))
+        {activeTab === "progresso" && (
+          <div className="tab-content-card">
+            <section className="tab-section">
+              <h3 className="section-title">Progresso por Categoria</h3>
+              {progressCategories.length === 0 ? (
+                <p className="empty-state">Nenhuma sessão realizada ainda.</p>
               ) : (
-                <tr>
-                  <td
-                    colSpan="3"
-                    style={{ textAlign: "center", color: "#999" }}
-                  >
-                    Nenhum histórico encontrado.
-                  </td>
-                </tr>
+                <div className="category-bars">
+                  {progressCategories.map((item, i) => (
+                    <CategoryBar key={i} category={item.category} accuracy={item.accuracy} />
+                  ))}
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
+            </section>
+
+            <section className="tab-section">
+              <h3 className="section-title">Histórico de Atividades</h3>
+              {sessions.length === 0 ? (
+                <p className="empty-state">Nenhuma atividade registrada.</p>
+              ) : (
+                <div className="sessions-list">
+                  {sessions.map((s) => (
+                    <SessionCard key={s.id} session={s} />
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+
+        {activeTab === "documentos" && (
+          <div className="tab-content-card">
+            <div className="doc-header">
+              <h3 className="section-title">Documentos do Aluno</h3>
+              <button className="btn-adicionar-doc" onClick={handleGerarRelatorio}>
+                <img src={docIcon} alt="" className="btn-icon-sm" />
+                Gerar Relatório
+              </button>
+            </div>
+
+            {analysisHistory.length === 0 ? (
+              <p className="empty-state">Nenhum relatório gerado ainda. Clique em "Gerar Relatório" para criar o primeiro.</p>
+            ) : (
+              <div className="doc-list">
+                {analysisHistory.map((report) => (
+                  <AnalysisReportCard
+                    key={report.id}
+                    report={report}
+                    student={studentDetails}
+                    onDownload={handleDownloadReport}
+                    downloading={downloadingId === report.id}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "anamnese" && (
+          <div className="tab-content-card">
+            <div className="anamnese-placeholder">
+              <p className="empty-state">Em breve disponível.</p>
+              <p style={{ color: "#aaa", fontSize: "0.9rem" }}>
+                O módulo de Anamnese está em desenvolvimento.
+              </p>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );
