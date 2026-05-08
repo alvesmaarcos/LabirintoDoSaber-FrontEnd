@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./style.css";
 import Navbar from "../../components/ui/NavBar/index.js";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { pdf } from "@react-pdf/renderer";
 import ReportPDF from "./ReportPDF";
@@ -42,6 +42,7 @@ function formatDate(isoStr) {
 
 function MainReport() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dropdownRef = useRef(null);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -84,19 +85,26 @@ function MainReport() {
             photoUrl: s.photoUrl,
           }));
         setAllStudents(mine);
+
+        const preId = location.state?.preSelectedStudentId;
+        if (preId) {
+          const preSelected = mine.find((s) => String(s.id) === String(preId));
+          if (preSelected) setSelectedStudent(preSelected);
+        }
       } catch (err) {
         console.error("Erro ao buscar alunos:", err);
       }
     };
     fetchStudents();
-  }, [navigate]);
+  }, [navigate, location.state?.preSelectedStudentId]);
 
+  // GET /analysis não persiste — seguro para auto-fetch na preview.
+  // O POST /snapshot (que persiste) só é chamado dentro do handleExportPDF.
   useEffect(() => {
     if (!selectedStudent) return;
-    if (selectedPeriod === "custom" && (!customStartDate || !customEndDate))
-      return;
+    if (selectedPeriod === "custom" && (!customStartDate || !customEndDate)) return;
 
-    const fetchAnalysis = async () => {
+    const fetchPreview = async () => {
       setLoadingAnalysis(true);
       try {
         const token = localStorage.getItem("authToken");
@@ -108,20 +116,19 @@ function MainReport() {
           params.startDate = new Date(customStartDate).toISOString();
           params.endDate = new Date(customEndDate + "T23:59:59").toISOString();
         }
-
         const res = await axios.get(
           `${API_BASE_URL}/task-notebook-session/analysis/student/${selectedStudent.id}`,
           { headers: { Authorization: `Bearer ${token}` }, params },
         );
         setAnalysisData(res.data);
       } catch (err) {
-        console.error("Erro ao buscar análise:", err);
+        console.error("Erro ao buscar preview:", err);
       } finally {
         setLoadingAnalysis(false);
       }
     };
 
-    fetchAnalysis();
+    fetchPreview();
   }, [selectedStudent, selectedPeriod, customStartDate, customEndDate]);
 
   useEffect(() => {
@@ -149,6 +156,11 @@ function MainReport() {
     setAnalysisData(null);
   };
 
+  const handlePeriodChange = (periodId) => {
+    setSelectedPeriod(periodId);
+    setAnalysisData(null);
+  };
+
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchTerm(val);
@@ -160,18 +172,48 @@ function MainReport() {
   };
 
   const handleExportPDF = async () => {
-    if (!selectedStudent || !analysisData) return;
-    const sessions = analysisData.sessions ?? [];
-    if (sessions.length === 0) {
-      setShowNoSessionsModal(true);
-      return;
-    }
+    if (!selectedStudent) return;
+    if (selectedPeriod === "custom" && (!customStartDate || !customEndDate)) return;
+
     setExportingPDF(true);
+    setLoadingAnalysis(true);
     try {
+      const token = localStorage.getItem("authToken");
+      const headers = { Authorization: `Bearer ${token}` };
+      const params = {};
+      const period = PERIODS.find((p) => p.id === selectedPeriod);
+      if (period?.limit) {
+        params.limit = period.limit;
+      } else if (selectedPeriod === "custom") {
+        params.startDate = new Date(customStartDate).toISOString();
+        params.endDate = new Date(customEndDate + "T23:59:59").toISOString();
+      }
+
+      // GET — dados completos com sessions para o PDF (não persiste)
+      const analysisRes = await axios.get(
+        `${API_BASE_URL}/task-notebook-session/analysis/student/${selectedStudent.id}`,
+        { headers, params },
+      );
+      const data = analysisRes.data;
+      setAnalysisData(data);
+
+      const sessions = data.sessions ?? [];
+      if (sessions.length === 0) {
+        setShowNoSessionsModal(true);
+        return;
+      }
+
+      // POST /snapshot — persiste 1 único snapshot no histórico
+      await axios.post(
+        `${API_BASE_URL}/task-notebook-session/analysis/student/${selectedStudent.id}/snapshot`,
+        null,
+        { headers, params },
+      );
+
       const blob = await pdf(
         <ReportPDF
           student={selectedStudent}
-          analysisData={analysisData}
+          analysisData={data}
           sessions={sessions}
           includeMetrics={includeMetrics}
           includeObservations={includeObservations}
@@ -187,6 +229,7 @@ function MainReport() {
       console.error("Erro ao gerar PDF:", err);
     } finally {
       setExportingPDF(false);
+      setLoadingAnalysis(false);
     }
   };
 
@@ -288,7 +331,7 @@ function MainReport() {
                 <button
                   key={p.id}
                   className={`period-option${selectedPeriod === p.id ? " active" : ""}`}
-                  onClick={() => setSelectedPeriod(p.id)}
+                  onClick={() => handlePeriodChange(p.id)}
                 >
                   {p.label}
                 </button>
