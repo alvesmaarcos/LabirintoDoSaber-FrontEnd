@@ -6,10 +6,10 @@ import { pdf } from "@react-pdf/renderer";
 import Navbar from "../../components/ui/NavBar/index.js";
 import ReportPDF from "../mainReport/ReportPDF.js";
 import iconRandom from "../../assets/images/icon_random.png";
-import editIcon from "../../assets/images/edit.png";
-import seta from "../../assets/images/seta_icon_esquerda.png";
-import calendarIcon from "../../assets/images/icon-calendario.png";
-import docIcon from "../../assets/images/icon-documento.png";
+import editIcon from "../../assets/images/editar-perfil-icon.png";
+import seta from "../../assets/images/back-button.png";
+import calendarIcon from "../../assets/images/blue-schedule-icon.png";
+import docIcon from "../../assets/images/relatorio-icon.png";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -68,7 +68,7 @@ function CategoryBar({ category, accuracy }) {
   );
 }
 
-function SessionCard({ session }) {
+function SessionCard({ session, onClick }) {
   const answers = Array.isArray(session.answers) ? session.answers : [];
   const totalAnswers = answers.length;
   const correctAnswers = answers.filter((a) => a.isCorrect).length;
@@ -76,7 +76,7 @@ function SessionCard({ session }) {
   const name = session.name || session.sessionName || session.activityName || "Sessão";
 
   return (
-    <div className="session-card">
+    <div className="session-card session-card-clickable" onClick={onClick}>
       <div className="session-card-left">
         <img src={calendarIcon} alt="sessão" className="session-icon" />
         <div>
@@ -291,32 +291,34 @@ function AlunoDetalhe() {
             <h1>Perfil do Aluno</h1>
             <p className="perfil-subtitle">Informações detalhadas e acompanhamento.</p>
           </div>
-          <div className="perfil-header-actions">
-            <button className="btn-gerar-relatorio" onClick={handleGerarRelatorio}>
-              <img src={docIcon} alt="" className="btn-icon" />
-              Gerar Relatório
-            </button>
-            <button
-              className="btn-editar-perfil"
-              onClick={() => navigate("/EditStudent", { state: { studentId } })}
-            >
-              <img src={editIcon} alt="" className="btn-icon" />
-              Editar Perfil
-            </button>
-          </div>
         </div>
 
         <div className="info-card-expanded">
           <div className="info-card-top">
-            <img
-              src={photoUrl || iconRandom}
-              alt={name}
-              className="avatar-grande"
-              onError={(e) => { e.currentTarget.src = iconRandom; }}
-            />
-            <div className="info-card-main">
-              <h2 className="aluno-nome">{name}</h2>
-              <p className="aluno-meta">{age} anos{genderLabel ? ` • ${genderLabel}` : ""}</p>
+            <div className="info-card-identity">
+              <img
+                src={photoUrl || iconRandom}
+                alt={name}
+                className="avatar-grande"
+                onError={(e) => { e.currentTarget.src = iconRandom; }}
+              />
+              <div className="info-card-main">
+                <h2 className="aluno-nome">{name}</h2>
+                <p className="aluno-meta">{age} anos{genderLabel ? ` • ${genderLabel}` : ""}</p>
+              </div>
+            </div>
+            <div className="info-card-actions">
+              <button className="btn-gerar-relatorio" onClick={handleGerarRelatorio}>
+                <img src={docIcon} alt="" className="btn-icon" />
+                Gerar Relatório
+              </button>
+              <button
+                className="btn-editar-perfil"
+                onClick={() => navigate("/EditStudent", { state: { studentId } })}
+              >
+                <img src={editIcon} alt="" className="btn-icon" />
+                Editar Perfil
+              </button>
             </div>
           </div>
 
@@ -344,6 +346,7 @@ function AlunoDetalhe() {
           </div>
         </div>
 
+        <div className="tab-bar-wrapper">
         <div className="tab-bar">
           {["progresso", "documentos", "anamnese"].map((tab) => (
             <button
@@ -354,6 +357,7 @@ function AlunoDetalhe() {
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
+        </div>
         </div>
 
         {activeTab === "progresso" && (
@@ -378,7 +382,11 @@ function AlunoDetalhe() {
               ) : (
                 <div className="sessions-list">
                   {sessions.map((s) => (
-                    <SessionCard key={s.id} session={s} />
+                    <SessionCard
+                      key={s.id}
+                      session={s}
+                      onClick={() => navigate("/ReportSession", { state: { sessionId: s.id } })}
+                    />
                   ))}
                 </div>
               )}
