@@ -217,14 +217,23 @@ function AlunoDetalhe() {
     if (downloadingId) return;
     setDownloadingId(report.id);
     try {
+      const token = localStorage.getItem("authToken");
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+
+      const freshRes = await axios.get(
+        `${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}`,
+        config
+      );
+      const sessions = Array.isArray(freshRes.data.sessions) ? freshRes.data.sessions : [];
+
       const analysisData = snapshotToAnalysisData(report);
       const blob = await pdf(
         <ReportPDF
           student={studentDetails}
           analysisData={analysisData}
-          sessions={[]}
+          sessions={sessions}
           includeMetrics={true}
-          includeObservations={false}
+          includeObservations={true}
         />
       ).toBlob();
       const url = URL.createObjectURL(blob);
