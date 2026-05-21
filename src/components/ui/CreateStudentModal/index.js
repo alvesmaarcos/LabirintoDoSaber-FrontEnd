@@ -224,7 +224,6 @@ function CreateStudentModal({ isOpen, onClose, onSaveSuccess }) {
                     placeholder="Preencha aqui..."
                     value={formData.cep}
                     onChange={handleChange}
-                    required
                   />
                 </div>
               </div>
@@ -240,7 +239,6 @@ function CreateStudentModal({ isOpen, onClose, onSaveSuccess }) {
                       placeholder="Preencha aqui..."
                       value={formData.rua}
                       onChange={handleChange}
-                      required
                     />
                   </div>
                 </div>
@@ -252,7 +250,6 @@ function CreateStudentModal({ isOpen, onClose, onSaveSuccess }) {
                     id="numero"
                     value={formData.numero}
                     onChange={handleChange}
-                    required
                   />
                 </div>
               </div>
@@ -265,7 +262,6 @@ function CreateStudentModal({ isOpen, onClose, onSaveSuccess }) {
                   placeholder="(99) 9 9999 9999"
                   value={formData.contato}
                   onChange={handleChange}
-                  required
                 />
               </div>
             </div>

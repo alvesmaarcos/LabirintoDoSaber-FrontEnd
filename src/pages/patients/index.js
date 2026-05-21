@@ -7,7 +7,7 @@ import iconRandom from '../../assets/images/icon_random.png';
 import addIcon from '../../assets/images/icon-button-aluno.png';
 import { useNavigate } from 'react-router-dom';
 
-import CreateStudentModal from '../../components/ui/CreateStudentModal/index.jsx';
+import CreateStudentModal from '../../components/ui/CreateStudentModal/index.js';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 

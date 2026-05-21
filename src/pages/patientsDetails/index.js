@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./style.css";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom"; // Adicionado useParams
 import axios from "axios";
 import { pdf } from "@react-pdf/renderer";
 import Navbar from "../../components/ui/NavBar/index.js";
@@ -136,7 +136,8 @@ function AnalysisReportCard({ report, student, onDownload, downloading }) {
 function AlunoDetalhe() {
   const navigate = useNavigate();
   const location = useLocation();
-  const studentId = location.state?.studentId;
+  const { studentId: paramId } = useParams(); // Pega da URL se houver
+  const studentId = paramId || location.state?.studentId; // Fallback seguro
 
   const [studentDetails, setStudentDetails] = useState(null);
   const [educatorDetails, setEducatorDetails] = useState(null);
@@ -160,13 +161,10 @@ function AlunoDetalhe() {
         const token = localStorage.getItem("authToken");
         const config = { headers: { Authorization: `Bearer ${token}` } };
 
-        // GET /analysis — tempo real, sem persistir. Traz categories + sessions completas.
-        // GET /history  — lista snapshots já salvos (aba Documentos).
-        const [educatorRes, studentRes, analysisRes, historyRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/educator/me`, config),
+        // 1. Busca dados essenciais (Educador e Alunos)
+        const [educatorRes, studentRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/educator/me`, config).catch(() => ({ data: {} })),
           axios.get(`${API_BASE_URL}/student`, config),
-          axios.get(`${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}`, config),
-          axios.get(`${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}/history`, config),
         ]);
 
         const educatorData = educatorRes.data || {};
@@ -179,6 +177,7 @@ function AlunoDetalhe() {
           ? studentRes.data
           : studentRes.data?.students || [];
         const studentData = list.find((s) => String(s.id) === String(studentId));
+        
         if (!studentData) {
           alert("Aluno não encontrado.");
           setIsLoading(false);
@@ -186,25 +185,35 @@ function AlunoDetalhe() {
         }
         setStudentDetails(studentData);
 
-        // Barras de progresso — dados em tempo real do GET
-        const analysisData = analysisRes.data || {};
-        const categoriesRaw = analysisData.categories || {};
-        const categoriesArray = Array.isArray(categoriesRaw)
-          ? categoriesRaw
-          : Object.values(categoriesRaw);
-        setProgressData(categoriesArray);
+        // 2. Busca dados de análise (Se falhar/estiver vazio, não quebra a tela)
+        try {
+          const analysisRes = await axios.get(`${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}`, config);
+          const analysisData = analysisRes.data || {};
+          
+          const categoriesRaw = analysisData.categories || {};
+          const categoriesArray = Array.isArray(categoriesRaw) ? categoriesRaw : Object.values(categoriesRaw);
+          setProgressData(categoriesArray);
 
-        // Sessões do GET (já têm answers completas para calcular acertos)
-        const sessionsRaw = Array.isArray(analysisData.sessions) ? analysisData.sessions : [];
-        const sorted = [...sessionsRaw].sort(
-          (a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0)
-        );
-        setSessions(sorted.slice(0, 10));
+          const sessionsRaw = Array.isArray(analysisData.sessions) ? analysisData.sessions : [];
+          const sorted = [...sessionsRaw].sort(
+            (a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0)
+          );
+          setSessions(sorted.slice(0, 10));
+        } catch (err) {
+          console.error("Este aluno ainda não possui dados de sessões ou análises.", err);
+        }
 
-        // Histórico de snapshots salvos — aba Documentos
-        setAnalysisHistory(Array.isArray(historyRes.data) ? historyRes.data : []);
-      } catch {
+        // 3. Busca histórico de documentos de forma isolada
+        try {
+          const historyRes = await axios.get(`${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}/history`, config);
+          setAnalysisHistory(Array.isArray(historyRes.data) ? historyRes.data : []);
+        } catch (err) {
+          console.error("Não foi possível carregar o histórico de relatórios.", err);
+        }
+
+      } catch (error) {
         alert("Erro ao carregar dados do aluno.");
+        navigate("/alunos");
       } finally {
         setIsLoading(false);
       }
@@ -283,9 +292,6 @@ function AlunoDetalhe() {
   const topicsText = Array.isArray(learningTopics) ? learningTopics.join(", ") : learningTopics || "Sem objetivo definido";
   const birthDateDisplay = dateOfBirth || birthDate ? formatDate(dateOfBirth || birthDate) : null;
 
-  // progressData vem do GET /analysis (tempo real, sem persistir)
-  const progressCategories = progressData;
-
   return (
     <div className="aluno-detalhe-container">
       <Navbar activePage="students" />
@@ -356,28 +362,28 @@ function AlunoDetalhe() {
         </div>
 
         <div className="tab-bar-wrapper">
-        <div className="tab-bar">
-          {["progresso", "documentos", "anamnese"].map((tab) => (
-            <button
-              key={tab}
-              className={`tab-btn${activeTab === tab ? " tab-btn-active" : ""}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
+          <div className="tab-bar">
+            {["progresso", "documentos", "anamnese"].map((tab) => (
+              <button
+                key={tab}
+                className={`tab-btn${activeTab === tab ? " tab-btn-active" : ""}`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
 
         {activeTab === "progresso" && (
           <div className="tab-content-card">
             <section className="tab-section">
               <h3 className="section-title">Progresso por Categoria</h3>
-              {progressCategories.length === 0 ? (
+              {progressData.length === 0 ? (
                 <p className="empty-state">Nenhuma sessão realizada ainda.</p>
               ) : (
                 <div className="category-bars">
-                  {progressCategories.map((item, i) => (
+                  {progressData.map((item, i) => (
                     <CategoryBar key={i} category={item.category} accuracy={item.accuracy} />
                   ))}
                 </div>
