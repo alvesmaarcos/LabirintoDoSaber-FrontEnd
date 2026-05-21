@@ -30,6 +30,8 @@ import ReportSession from "./pages/ReportSession/index.js";
 import Profile from "./pages/Profile";
 import SessionInitPage from "./pages/sessionInit";
 import EditStudentPage from "./pages/EditStudent";
+import AnamnesePage from "./pages/anamnese";
+import AnamneseFormPage from "./pages/anamneseForm";
 
 function App() {
   return (
@@ -68,6 +70,9 @@ function App() {
         <Route path="/Profile" element={<Profile />} />
         <Route path="/SessionInit" element={<SessionInitPage />} />
         <Route path="/EditStudent" element={<EditStudentPage />} />
+        <Route path="/anamnese" element={<AnamnesePage />} />
+        <Route path="/anamnese/criar" element={<AnamneseFormPage />} />
+        <Route path="/anamnese/editar" element={<AnamneseFormPage />} />
       </Routes>
     </div>
   );

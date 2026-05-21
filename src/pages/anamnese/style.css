@@ -1,0 +1,340 @@
+.anamnese-page {
+  min-height: 100vh;
+  background-color: #eef0f5;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Layout igual ao patients — padding lateral alinha com a navbar */
+.anamnese-content {
+  flex: 1;
+  padding: 2rem 2.5rem;
+}
+
+/* Header row */
+.anamnese-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.anamnese-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 0.25rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.anamnese-subtitle {
+  font-size: 1.05rem;
+  color: #777;
+  margin: 0;
+}
+
+.anamnese-create-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #63e9e2;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-family: 'Nunito', sans-serif;
+  border: none;
+  border-radius: 20px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0px 4px 8px rgba(99, 233, 226, 0.35);
+  transition: all 0.2s;
+}
+
+.anamnese-create-btn:hover {
+  background-color: #44d9d2;
+  box-shadow: 0px 6px 12px rgba(99, 233, 226, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Search — maior, igual ao patients */
+.anamnese-search-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.anamnese-search-input {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-family: 'Nunito', sans-serif;
+  outline: none;
+  background: #fff;
+  box-sizing: border-box;
+  color: #444;
+  transition: border-color 0.2s;
+}
+
+.anamnese-search-input:focus {
+  border-color: #63e9e2;
+}
+
+.anamnese-search-input::placeholder {
+  color: #aaa;
+}
+
+/* Grid */
+.anamnese-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Card */
+.anamnese-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 1rem 1.25rem 0.9rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.2s ease-in-out;
+}
+
+.anamnese-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.anamnese-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.anamnese-card-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  background-color: #D8F5F3;
+  border-radius: 8px;
+  padding: 6px;
+  flex-shrink: 0;
+}
+
+.anamnese-card-info {
+  flex: 1;
+}
+
+.anamnese-card-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 4px;
+  font-family: 'Nunito', sans-serif;
+}
+
+.anamnese-card-desc {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.anamnese-card-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-top: 1px solid #f2f2f2;
+  padding-top: 0.75rem;
+}
+
+.anamnese-card-meta {
+  display: flex;
+  gap: 24px;
+  font-size: 0.82rem;
+  color: #444;
+}
+
+.meta-label {
+  color: #888;
+  font-weight: 400;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.anamnese-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.anamnese-icon-btn {
+  background: #f0f0f0;
+  border: none;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.anamnese-icon-btn img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.anamnese-icon-btn:hover {
+  background: #e0e0e0;
+}
+
+.anamnese-icon-btn--danger {
+  background: #fdecea;
+}
+
+.anamnese-icon-btn--danger:hover {
+  background: #fad4d1;
+}
+
+.anamnese-icon-btn--danger img {
+  filter: invert(30%) sepia(80%) saturate(600%) hue-rotate(320deg);
+}
+
+/* Pagination — sem borda, igual ao objetivo */
+.anamnese-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.page-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  color: #999;
+  transition: background 0.15s, color 0.15s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: #f0f0f0;
+  color: #555;
+}
+
+.page-btn.active {
+  background: #D8F5F3;
+  color: #008D85;
+  font-weight: 700;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Empty state */
+.anamnese-empty {
+  text-align: center;
+  color: #999;
+  font-size: 0.95rem;
+  margin-top: 48px;
+}
+
+/* Delete modal */
+.anamnese-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.anamnese-modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 36px 40px;
+  max-width: 460px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+.anamnese-modal-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 14px;
+}
+
+.anamnese-modal-desc {
+  font-size: 0.92rem;
+  color: #666;
+  line-height: 1.5;
+  margin: 0 0 28px;
+}
+
+.anamnese-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.anamnese-modal-cancel {
+  padding: 10px 24px;
+  border: 1.5px solid #ccc;
+  background: #fff;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #444;
+  transition: border-color 0.2s;
+}
+
+.anamnese-modal-cancel:hover {
+  border-color: #999;
+}
+
+.anamnese-modal-confirm {
+  padding: 10px 24px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.anamnese-modal-confirm:hover {
+  background: #c0392b;
+}
+
+.anamnese-delete-error {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #e74c3c;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}

@@ -59,34 +59,37 @@ function Navbar({ activePage }) {
       <nav className="navbar">
         <Link
           to="/home"
-          // Usamos o identificador 'dashboard'
           className={`nav-link ${checkActive("dashboard", "/home") ? "active" : ""}`}
         >
-          Dashboard
+          Tela Inicial
         </Link>
-        
+
         <Link
           to="/activitiesMain"
-          // Usamos o identificador 'activities'
           className={`nav-link ${checkActive("activities", "/activitiesMain") ? "active" : ""}`}
         >
           Atividades
         </Link>
-        
+
         <Link
           to="/alunos"
-          // Usamos o identificador 'students'
           className={`nav-link ${checkActive("students", "/alunos") ? "active" : ""}`}
         >
           Alunos
         </Link>
-        
+
         <Link
           to="/MainReport"
-          // Usamos o identificador 'reports'
           className={`nav-link ${checkActive("reports", "/MainReport") ? "active" : ""}`}
         >
           Relatórios
+        </Link>
+
+        <Link
+          to="/anamnese"
+          className={`nav-link ${checkActive("anamnese", "/anamnese") ? "active" : ""}`}
+        >
+          Anamneses
         </Link>
       </nav>
 
