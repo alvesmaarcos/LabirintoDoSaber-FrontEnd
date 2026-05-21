@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./style.css";
-import { useNavigate, useLocation, useParams } from "react-router-dom"; // Adicionado useParams
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axios from "axios";
 import { pdf } from "@react-pdf/renderer";
 import Navbar from "../../components/ui/NavBar/index.js";
@@ -12,6 +12,13 @@ import calendarIcon from "../../assets/images/blue-schedule-icon.png";
 import docIcon from "../../assets/images/relatorio-icon.png";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
+const TAB_LABELS = {
+  progresso: "Progresso",
+  sessoes: "Sessões",
+  documentos: "Documentos",
+  anamnese: "Anamnese",
+};
 
 const CATEGORY_LABELS = {
   Reading: "Leitura",
@@ -72,6 +79,7 @@ function SessionCard({ session, onClick }) {
   const answers = Array.isArray(session.answers) ? session.answers : [];
   const totalAnswers = answers.length;
   const correctAnswers = answers.filter((a) => a.isCorrect).length;
+  const accuracyPct = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
   const durationMin = sessionDurationMinutes(session.startedAt, session.finishedAt);
   const name = session.name || session.sessionName || session.activityName || "Sessão";
 
@@ -79,18 +87,26 @@ function SessionCard({ session, onClick }) {
     <div className="session-card session-card-clickable" onClick={onClick}>
       <div className="session-card-left">
         <img src={calendarIcon} alt="sessão" className="session-icon" />
-        <div>
+        <div className="session-info-meta">
           <p className="session-name">{name}</p>
           <p className="session-date">{formatDateTime(session.startedAt || session.date || session.createdAt)}</p>
         </div>
       </div>
-      <div className="session-card-right">
-        {totalAnswers > 0 && (
-          <span className="session-acertos">{correctAnswers}/{totalAnswers} acertos</span>
-        )}
-        {durationMin != null && (
-          <span className="session-time">{durationMin} min</span>
-        )}
+      
+      <div className="session-card-col">
+        <span className="session-col-label">Duração</span>
+        <span className="session-col-value">{durationMin != null ? `${durationMin} min` : "—"}</span>
+      </div>
+
+      <div className="session-card-col">
+        <span className="session-col-label">Taxa de Acerto</span>
+        <span className="session-col-value">{totalAnswers > 0 ? `${accuracyPct}%` : "—"}</span>
+      </div>
+
+      <div className="session-card-right-action">
+        <button className="btn-session-obs">
+          Editar Observação
+        </button>
       </div>
     </div>
   );
@@ -136,8 +152,8 @@ function AnalysisReportCard({ report, student, onDownload, downloading }) {
 function AlunoDetalhe() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { studentId: paramId } = useParams(); // Pega da URL se houver
-  const studentId = paramId || location.state?.studentId; // Fallback seguro
+  const { studentId: paramId } = useParams();
+  const studentId = paramId || location.state?.studentId;
 
   const [studentDetails, setStudentDetails] = useState(null);
   const [educatorDetails, setEducatorDetails] = useState(null);
@@ -161,7 +177,6 @@ function AlunoDetalhe() {
         const token = localStorage.getItem("authToken");
         const config = { headers: { Authorization: `Bearer ${token}` } };
 
-        // 1. Busca dados essenciais (Educador e Alunos)
         const [educatorRes, studentRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/educator/me`, config).catch(() => ({ data: {} })),
           axios.get(`${API_BASE_URL}/student`, config),
@@ -173,9 +188,7 @@ function AlunoDetalhe() {
           photoUrl: educatorData.photoUrl || "",
         });
 
-        const list = Array.isArray(studentRes.data)
-          ? studentRes.data
-          : studentRes.data?.students || [];
+        const list = Array.isArray(studentRes.data) ? studentRes.data : studentRes.data?.students || [];
         const studentData = list.find((s) => String(s.id) === String(studentId));
         
         if (!studentData) {
@@ -185,7 +198,6 @@ function AlunoDetalhe() {
         }
         setStudentDetails(studentData);
 
-        // 2. Busca dados de análise (Se falhar/estiver vazio, não quebra a tela)
         try {
           const analysisRes = await axios.get(`${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}`, config);
           const analysisData = analysisRes.data || {};
@@ -195,15 +207,12 @@ function AlunoDetalhe() {
           setProgressData(categoriesArray);
 
           const sessionsRaw = Array.isArray(analysisData.sessions) ? analysisData.sessions : [];
-          const sorted = [...sessionsRaw].sort(
-            (a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0)
-          );
-          setSessions(sorted.slice(0, 10));
+          const sorted = [...sessionsRaw].sort((a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0));
+          setSessions(sorted);
         } catch (err) {
-          console.error("Este aluno ainda não possui dados de sessões ou análises.", err);
+          console.error("Sem dados de sessões prévias para este aluno.", err);
         }
 
-        // 3. Busca histórico de documentos de forma isolada
         try {
           const historyRes = await axios.get(`${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}/history`, config);
           setAnalysisHistory(Array.isArray(historyRes.data) ? historyRes.data : []);
@@ -229,18 +238,15 @@ function AlunoDetalhe() {
       const token = localStorage.getItem("authToken");
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
-      const freshRes = await axios.get(
-        `${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}`,
-        config
-      );
-      const sessions = Array.isArray(freshRes.data.sessions) ? freshRes.data.sessions : [];
+      const freshRes = await axios.get(`${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}`, config);
+      const sessionsData = Array.isArray(freshRes.data.sessions) ? freshRes.data.sessions : [];
 
       const analysisData = snapshotToAnalysisData(report);
       const blob = await pdf(
         <ReportPDF
           student={studentDetails}
           analysisData={analysisData}
-          sessions={sessions}
+          sessions={sessionsData}
           includeMetrics={true}
           includeObservations={true}
         />
@@ -267,9 +273,7 @@ function AlunoDetalhe() {
     return (
       <div className="aluno-detalhe-container">
         <Navbar activePage="students" />
-        <p style={{ textAlign: "center", marginTop: "4rem", color: "#888" }}>
-          Carregando detalhes do aluno...
-        </p>
+        <p style={{ textAlign: "center", marginTop: "4rem", color: "#888" }}>Carregando detalhes do aluno...</p>
       </div>
     );
   }
@@ -278,9 +282,7 @@ function AlunoDetalhe() {
     return (
       <div className="aluno-detalhe-container">
         <Navbar activePage="students" />
-        <p style={{ textAlign: "center", marginTop: "4rem", color: "#888" }}>
-          Aluno não encontrado.
-        </p>
+        <p style={{ textAlign: "center", marginTop: "4rem", color: "#888" }}>Aluno não encontrado.</p>
       </div>
     );
   }
@@ -297,7 +299,6 @@ function AlunoDetalhe() {
       <Navbar activePage="students" />
 
       <main className="main-content-detalhe">
-
         <div className="perfil-header-row">
           <button onClick={() => navigate(-1)} className="back-arrow-button">
             <img src={seta} alt="voltar" className="seta" />
@@ -363,13 +364,13 @@ function AlunoDetalhe() {
 
         <div className="tab-bar-wrapper">
           <div className="tab-bar">
-            {["progresso", "documentos", "anamnese"].map((tab) => (
+            {Object.keys(TAB_LABELS).map((tab) => (
               <button
                 key={tab}
                 className={`tab-btn${activeTab === tab ? " tab-btn-active" : ""}`}
                 onClick={() => setActiveTab(tab)}
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {TAB_LABELS[tab]}
               </button>
             ))}
           </div>
@@ -389,9 +390,13 @@ function AlunoDetalhe() {
                 </div>
               )}
             </section>
+          </div>
+        )}
 
+        {activeTab === "sessoes" && (
+          <div className="tab-content-card">
             <section className="tab-section">
-              <h3 className="section-title">Histórico de Atividades</h3>
+              <h3 className="section-title">Histórico de Sessões</h3>
               {sessions.length === 0 ? (
                 <p className="empty-state">Nenhuma atividade registrada.</p>
               ) : (
@@ -447,7 +452,6 @@ function AlunoDetalhe() {
             </div>
           </div>
         )}
-
       </main>
     </div>
   );
