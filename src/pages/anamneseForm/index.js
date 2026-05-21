@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./style.css";
@@ -24,6 +24,24 @@ function newLocalId() {
   return `local_${++localIdCounter}`;
 }
 
+const GripHandle = () => (
+  <svg
+    className="anamnese-grip-icon"
+    width="10"
+    height="2"
+    viewBox="0 0 6 9"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle cx="1.5" cy="1.5" r="0.75" fill="#bbb" />
+    <circle cx="4.5" cy="1.5" r="0.75" fill="#bbb" />
+    <circle cx="1.5" cy="4.5" r="0.75" fill="#bbb" />
+    <circle cx="4.5" cy="4.5" r="0.75" fill="#bbb" />
+    <circle cx="1.5" cy="7.5" r="0.75" fill="#bbb" />
+    <circle cx="4.5" cy="7.5" r="0.75" fill="#bbb" />
+  </svg>
+);
+
 function AnamneseFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,7 +49,7 @@ function AnamneseFormPage() {
   const isEditMode = Boolean(templateId);
 
   const [pageTitle, setPageTitle] = useState(
-    isEditMode ? "" : "Criar formulário"
+    isEditMode ? "" : "Criar formulário",
   );
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -40,13 +58,18 @@ function AnamneseFormPage() {
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Drag state
+  const dragIndex = useRef(null);
+  const canDragRef = useRef(false);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+
   const loadTemplate = useCallback(async () => {
     try {
       const token = localStorage.getItem("authToken");
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = await axios.get(
         `${API_BASE_URL}/anamnese/templates/${templateId}`,
-        config
+        config,
       );
       setPageTitle(data.title);
       setTitle(data.title);
@@ -61,7 +84,7 @@ function AnamneseFormPage() {
             _localId: newLocalId(),
             text: opt.text,
           })),
-        }))
+        })),
       );
     } catch (error) {
       console.error("Erro ao carregar template:", error);
@@ -74,6 +97,49 @@ function AnamneseFormPage() {
   useEffect(() => {
     if (isEditMode) loadTemplate();
   }, [isEditMode, loadTemplate]);
+
+  // ── Drag handlers ──────────────────────────────────────────────────────────
+
+  const handleDragStart = (e, index) => {
+    if (!canDragRef.current) {
+      e.preventDefault();
+      return;
+    }
+    dragIndex.current = index;
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverIndex !== index) setDragOverIndex(index);
+  };
+
+  const handleDrop = (e, index) => {
+    e.preventDefault();
+    const from = dragIndex.current;
+    if (from === null || from === index) {
+      setDragOverIndex(null);
+      return;
+    }
+    setQuestions((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(index, 0, moved);
+      return next;
+    });
+    dragIndex.current = null;
+    canDragRef.current = false;
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    dragIndex.current = null;
+    canDragRef.current = false;
+    setDragOverIndex(null);
+  };
+
+  // ── Question / option mutations ────────────────────────────────────────────
 
   const addQuestion = () => {
     setQuestions((prev) => [
@@ -101,7 +167,7 @@ function AnamneseFormPage() {
           updated.options = [];
         }
         return updated;
-      })
+      }),
     );
   };
 
@@ -113,7 +179,7 @@ function AnamneseFormPage() {
           ...q,
           options: [...q.options, { _localId: newLocalId(), text: "" }],
         };
-      })
+      }),
     );
   };
 
@@ -124,10 +190,10 @@ function AnamneseFormPage() {
         return {
           ...q,
           options: q.options.map((opt) =>
-            opt._localId === optLocalId ? { ...opt, text } : opt
+            opt._localId === optLocalId ? { ...opt, text } : opt,
           ),
         };
-      })
+      }),
     );
   };
 
@@ -139,9 +205,11 @@ function AnamneseFormPage() {
           ...q,
           options: q.options.filter((opt) => opt._localId !== optLocalId),
         };
-      })
+      }),
     );
   };
+
+  // ── Validation & save ─────────────────────────────────────────────────────
 
   const validate = () => {
     if (!title.trim()) {
@@ -158,7 +226,7 @@ function AnamneseFormPage() {
         const filledOpts = q.options.filter((o) => o.text.trim());
         if (filledOpts.length < 2) {
           setErrorMsg(
-            `A pergunta ${i + 1} (${TYPE_LABELS[q.type]}) precisa de pelo menos 2 opções.`
+            `A pergunta ${i + 1} (${TYPE_LABELS[q.type]}) precisa de pelo menos 2 opções.`,
           );
           return false;
         }
@@ -200,7 +268,7 @@ function AnamneseFormPage() {
         await axios.put(
           `${API_BASE_URL}/anamnese/templates/${templateId}`,
           payload,
-          config
+          config,
         );
       } else {
         await axios.post(`${API_BASE_URL}/anamnese/templates`, payload, config);
@@ -210,7 +278,7 @@ function AnamneseFormPage() {
       const errCode = error.response?.data?.error;
       if (errCode === "TEMPLATE_HAS_RESPONSES") {
         setErrorMsg(
-          "Este modelo já possui respostas vinculadas e não pode ser editado."
+          "Este modelo já possui respostas vinculadas e não pode ser editado.",
         );
       } else {
         setErrorMsg("Erro ao salvar o formulário. Tente novamente.");
@@ -223,7 +291,7 @@ function AnamneseFormPage() {
   const handleDelete = async () => {
     if (
       !window.confirm(
-        `Tem certeza que deseja excluir o modelo "${title}"? Esta ação não pode ser desfeita.`
+        `Tem certeza que deseja excluir o modelo "${title}"? Esta ação não pode ser desfeita.`,
       )
     )
       return;
@@ -232,14 +300,14 @@ function AnamneseFormPage() {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       await axios.delete(
         `${API_BASE_URL}/anamnese/templates/${templateId}`,
-        config
+        config,
       );
       navigate("/anamnese");
     } catch (error) {
       const errCode = error.response?.data?.error;
       if (errCode === "TEMPLATE_HAS_RESPONSES") {
         setErrorMsg(
-          "Este modelo já possui respostas vinculadas e não pode ser excluído."
+          "Este modelo já possui respostas vinculadas e não pode ser excluído.",
         );
       } else {
         setErrorMsg("Erro ao excluir o formulário. Tente novamente.");
@@ -346,8 +414,38 @@ function AnamneseFormPage() {
           ) : (
             <div className="anamnese-questions-list">
               {questions.map((q, index) => (
-                <div key={q._localId} className="anamnese-question-card">
+                <div
+                  key={q._localId}
+                  className={[
+                    "anamnese-question-card",
+                    dragOverIndex === index && dragIndex.current !== index
+                      ? "anamnese-question-card--drag-over"
+                      : "",
+                    dragIndex.current === index
+                      ? "anamnese-question-card--dragging"
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  draggable={true}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                >
                   <div className="anamnese-question-top">
+                    {/* Grip handle — ativa o drag apenas quando arrastado daqui */}
+                    <span
+                      className="anamnese-grip-handle"
+                      onMouseDown={() => {
+                        canDragRef.current = true;
+                      }}
+                      onMouseUp={() => {
+                        canDragRef.current = false;
+                      }}
+                    >
+                      <GripHandle />
+                    </span>
                     <span className="anamnese-question-label">
                       Pergunta {index + 1}
                     </span>
@@ -397,7 +495,7 @@ function AnamneseFormPage() {
                           updateQuestion(
                             q._localId,
                             "required",
-                            e.target.checked
+                            e.target.checked,
                           )
                         }
                       />
@@ -439,7 +537,7 @@ function AnamneseFormPage() {
                                 updateOption(
                                   q._localId,
                                   opt._localId,
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                             />

@@ -270,18 +270,59 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  transition:
+    opacity 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.anamnese-question-card--dragging {
+  opacity: 0.45;
+}
+
+.anamnese-question-card--drag-over {
+  border-color: #63e9e2;
+  box-shadow: 0 0 0 3px rgba(99, 233, 226, 0.25);
 }
 
 .anamnese-question-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
 }
 
 .anamnese-question-label {
   font-size: 0.88rem;
   font-weight: 600;
   color: #555;
+  flex: 1;
+}
+
+/* Grip handle — 6 bolinhas */
+.anamnese-grip-handle {
+  display: flex;
+  align-items: center;
+  cursor: grab;
+  padding: 2px 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.anamnese-grip-handle:hover {
+  background: #ebebeb;
+}
+
+.anamnese-grip-handle:active {
+  cursor: grabbing;
+}
+
+.anamnese-grip-icon {
+  display: block;
+  user-select: none;
+  width: 16px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .anamnese-remove-question-btn {
