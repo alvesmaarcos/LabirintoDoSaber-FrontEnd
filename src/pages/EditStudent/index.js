@@ -8,7 +8,6 @@ import iconProfile from "../../assets/images/icon_profile.png";
 import iconBack from "../../assets/images/seta_icon_esquerda.png";
 import avatarPlaceholder from "../../assets/images/icon_random.png";
 import iconUpload from "../../assets/images/iconUpload.png";
-import iconPencil from "../../assets/images/edit.png";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -26,7 +25,6 @@ function EditStudentPage() {
 
   const [studentPhotoUrl, setStudentPhotoUrl] = useState("");
   const [profileFile, setProfileFile] = useState(null);
-  const [fileName, setFileName] = useState("Nenhum arquivo foi selecionado");
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -54,7 +52,6 @@ function EditStudentPage() {
         const config = { headers: { Authorization: `Bearer ${token}` } };
 
         const res = await axios.get(`${API_BASE_URL}/student/`, config);
-
         const list = Array.isArray(res.data) ? res.data : res.data.students || [];
         const student = list.find((s) => String(s.id) === String(studentId));
 
@@ -103,17 +100,14 @@ function EditStudentPage() {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       setProfileFile(file);
-      setFileName(file.name);
       setStudentPhotoUrl(URL.createObjectURL(file));
     } else {
       setProfileFile(null);
-      setFileName("Nenhum arquivo foi selecionado");
     }
   };
 
   const buildUpdatePayload = () => {
     const payload = {};
-
     const nome = (formData.nome || "").trim();
     const idadeNum = formData.idade !== "" ? Number(formData.idade) : NaN;
     const genero = formData.genero;
@@ -150,7 +144,6 @@ function EditStudentPage() {
 
   const uploadStudentPhoto = async ({ token }) => {
     if (!profileFile) return null;
-
     const form = new FormData();
     form.append("photo", profileFile);
 
@@ -161,22 +154,15 @@ function EditStudentPage() {
     ];
 
     let lastErr = null;
-
     for (const url of tryUrls) {
       try {
         const res = await axios.put(url, form, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         const data = res.data || {};
-        const photo =
-          data.photoUrl || data._photoUrl || data.photo || data.url || null;
-
+        const photo = data.photoUrl || data._photoUrl || data.photo || data.url || null;
         if (photo) return photo;
-
         if (data.student?.photoUrl) return data.student.photoUrl;
-        if (data.student?._photoUrl) return data.student._photoUrl;
-
         return "__UPLOADED_BUT_NO_URL__";
       } catch (err) {
         lastErr = err;
@@ -184,13 +170,11 @@ function EditStudentPage() {
         if (status === 404 || status === 405) continue;
       }
     }
-
     throw lastErr;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const validationError = validateBeforeSubmit();
     if (validationError) {
       alert(validationError);
@@ -198,14 +182,12 @@ function EditStudentPage() {
     }
 
     const payload = buildUpdatePayload();
-
     if (Object.keys(payload).length === 0 && !profileFile) {
       alert("Nada para atualizar.");
       return;
     }
 
     setIsSaving(true);
-
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
@@ -215,10 +197,8 @@ function EditStudentPage() {
       }
 
       let uploadedPhotoUrl = null;
-
       if (profileFile) {
         uploadedPhotoUrl = await uploadStudentPhoto({ token });
-
         if (uploadedPhotoUrl && uploadedPhotoUrl !== "__UPLOADED_BUT_NO_URL__") {
           setStudentPhotoUrl(`${uploadedPhotoUrl}?t=${Date.now()}`);
         }
@@ -230,35 +210,9 @@ function EditStudentPage() {
           payload,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
         const updated = res.data || {};
-
-        const newPhoto =
-          updated.photoUrl || updated._photoUrl || updated.student?.photoUrl || updated.student?._photoUrl;
-
+        const newPhoto = updated.photoUrl || updated._photoUrl || updated.student?.photoUrl;
         if (newPhoto) setStudentPhotoUrl(`${newPhoto}?t=${Date.now()}`);
-
-        setFormData((prev) => ({
-          ...prev,
-          nome: updated.name ?? updated.student?.name ?? prev.nome,
-          idade:
-            updated.age !== undefined && updated.age !== null
-              ? String(updated.age)
-              : updated.student?.age !== undefined && updated.student?.age !== null
-              ? String(updated.student.age)
-              : prev.idade,
-          genero: updated.gender ?? updated.student?.gender ?? prev.genero,
-          cep: updated.zipcode ?? updated.student?.zipcode ?? prev.cep,
-          rua: updated.road ?? updated.student?.road ?? prev.rua,
-          numero: updated.housenumber ?? updated.student?.housenumber ?? prev.numero,
-          contato: updated.phonenumber ?? updated.student?.phonenumber ?? prev.contato,
-          objetivo:
-            Array.isArray(updated.learningTopics) && updated.learningTopics.length > 0
-              ? updated.learningTopics[0]
-              : Array.isArray(updated.student?.learningTopics) && updated.student.learningTopics.length > 0
-              ? updated.student.learningTopics[0]
-              : prev.objetivo,
-        }));
       }
 
       alert("✅ Aluno atualizado com sucesso!");
@@ -269,9 +223,7 @@ function EditStudentPage() {
         navigate("/");
         return;
       }
-      const msg = error.response?.data ? JSON.stringify(error.response.data) : error.message;
-      alert(`❌ Falha ao atualizar: ${msg}`);
-      console.error("Erro update aluno:", error);
+      alert(`❌ Falha ao atualizar: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -279,108 +231,78 @@ function EditStudentPage() {
 
   if (isLoading) {
     return (
-      <div className="alunos-dashboard-container">
+      <div className="edit-student-dashboard-container">
         <h2 style={{ textAlign: "center", marginTop: 40 }}>Carregando...</h2>
       </div>
     );
   }
 
   return (
-    <div className="alunos-dashboard-container">
-      <header className="alunos-header">
-        <img src={logo} alt="Labirinto do Saber" className="alunos-logo" />
-        <nav className="alunos-navbar">
-          <a href="/home" className="alunos-nav-link">Dashboard</a>
-          <a href="/activitiesMain" className="alunos-nav-link">Atividades</a>
-          <a href="/alunos" className="alunos-nav-link active">Alunos</a>
-          <a href="/MainReport" className="alunos-nav-link">Relatórios</a>
+    <div className="edit-student-dashboard-container">
+      <header className="edit-student-header">
+        <img src={logo} alt="Labirinto do Saber" className="edit-student-logo" />
+        <nav className="edit-student-navbar">
+          <a href="/home" className="edit-student-nav-link">Dashboard</a>
+          <a href="/activitiesMain" className="edit-student-nav-link">Atividades</a>
+          <a href="/alunos" className="edit-student-nav-link active">Alunos</a>
+          <a href="/MainReport" className="edit-student-nav-link">Relatórios</a>
         </nav>
-        <div className="alunos-user-controls">
-          <img src={iconNotification} alt="Notificações" className="alunos-icon" />
-          <img src={iconProfile} alt="Perfil" className="alunos-icon alunos-profile-icon" />
+        <div className="edit-student-user-controls">
+          <img src={iconNotification} alt="Notificações" className="edit-student-icon" />
+          <img src={iconProfile} alt="Perfil" className="edit-student-icon edit-student-profile-icon" />
         </div>
       </header>
 
-      <main className="alunos-main-content">
-        <button className="alunos-back-button" onClick={() => navigate(-1)}>
-          <img src={iconBack} alt="seta" className="alunos-seta" />
+      <main className="edit-student-main-content">
+        <button className="edit-student-back-button" onClick={() => navigate(-1)}>
+          <img src={iconBack} alt="seta" className="edit-student-seta" />
         </button>
 
-        <div className="alunos-profile-card">
+        <div className="edit-student-profile-card">
+          <div className="edit-title-container">
+            <h2>Editar Perfil do Aluno</h2>
+            <p>Atualize as informações cadastradas.</p>
+          </div>
+
           <form onSubmit={handleSubmit}>
-            <div className="alunos-profile-pic-section">
-              <img
-                src={studentPhotoUrl || avatarPlaceholder}
-                alt="Foto de perfil"
-                className="alunos-avatar"
-                onError={(e) => {
-                  e.currentTarget.src = avatarPlaceholder;
-                }}
-              />
-              <div className="alunos-file-uploader">
-                <label htmlFor="file-upload" className="alunos-file-upload-label">
-                  <img src={iconUpload} alt="" style={{ width: 20, height: 20, opacity: 0.7 }} />
-                  Selecionar arquivo
+            <div className="edit-student-profile-pic-section">
+              <div className="avatar-wrapper">
+                <img
+                  src={studentPhotoUrl || avatarPlaceholder}
+                  alt="Foto de perfil"
+                  className="edit-student-avatar"
+                  onError={(e) => { e.currentTarget.src = avatarPlaceholder; }}
+                />
+                <label htmlFor="file-upload" className="inner-upload-badge">
+                  <img src={iconUpload} alt="" />
                 </label>
+              </div>
+              <div className="edit-student-file-uploader">
+                <p className="upload-instruction-text">Clique no ícone para alterar a foto</p>
                 <input
                   id="file-upload"
                   type="file"
                   onChange={handleFileChange}
                   accept="image/png, image/jpeg"
                 />
-                <span className="alunos-file-name">{fileName}</span>
-                <p className="alunos-file-hint">Formatos aceitos: JPG, PNG. Tamanho máximo: 2MB.</p>
               </div>
             </div>
 
-            <div className="alunos-form-grid">
-              <div className="alunos-form-column">
-                <div className="alunos-form-group">
-                  <label htmlFor="nome">Nome do paciente</label>
-                  <div className="alunos-input-with-icon">
-                    <img src={iconPencil} alt="" className="alunos-input-icon" />
-                    <input
-                      type="text"
-                      id="nome"
-                      placeholder="Preencha aqui..."
-                      value={formData.nome}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="alunos-form-group">
-                  <label htmlFor="idade">Idade do paciente</label>
-                  <input
-                    type="number"
-                    id="idade"
-                    placeholder="Digite a idade aqui..."
-                    min="1"
-                    value={formData.idade}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <div className="alunos-form-group">
-                  <label htmlFor="objetivo">Objetivo do paciente</label>
-                  <div className="alunos-input-with-icon">
-                    <img src={iconPencil} alt="" className="alunos-input-icon" />
-                    <input
-                      type="text"
-                      id="objetivo"
-                      placeholder="Preencha aqui..."
-                      value={formData.objetivo}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </div>
+            <div className="section-form-flow">
+              <div className="figma-section-title">
+                <span className="step-badge">1</span>
+                <h3>Informações Pessoais</h3>
               </div>
-
-              <div className="alunos-form-column">
-                <div className="alunos-form-group">
+              <div className="edit-student-form-grid">
+                <div className="edit-student-form-group">
+                  <label htmlFor="nome">Nome Completo</label>
+                  <input type="text" id="nome" value={formData.nome} onChange={handleChange} required />
+                </div>
+                <div className="edit-student-form-group">
+                  <label htmlFor="idade">Idade</label>
+                  <input type="number" id="idade" value={formData.idade} onChange={handleChange} required />
+                </div>
+                <div className="edit-student-form-group" style={{ gridColumn: "1 / -1" }}>
                   <label htmlFor="genero">Gênero</label>
                   <select id="genero" value={formData.genero} onChange={handleChange} required>
                     <option value="male">Masculino</option>
@@ -388,67 +310,63 @@ function EditStudentPage() {
                     <option value="other">Outro</option>
                   </select>
                 </div>
+              </div>
 
-                <div className="alunos-form-group">
+              <div className="figma-section-title">
+                <span className="step-badge">2</span>
+                <h3>Endereço</h3>
+              </div>
+              <div className="edit-student-form-grid">
+                <div className="edit-student-form-group">
                   <label htmlFor="cep">CEP</label>
-                  <div className="alunos-input-with-icon">
-                    <img src={iconPencil} alt="" className="alunos-input-icon" />
-                    <input
-                      type="text"
-                      id="cep"
-                      placeholder="Preencha aqui..."
-                      value={formData.cep}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
+                  <input type="text" id="cep" value={formData.cep} onChange={handleChange} required />
                 </div>
-
-                <div className="alunos-form-row">
-                  <div className="alunos-form-group" style={{ flex: 3 }}>
+                <div className="edit-student-form-row" style={{ gridColumn: "1 / -1" }}>
+                  <div className="edit-student-form-group" style={{ flex: 3 }}>
                     <label htmlFor="rua">Rua</label>
-                    <div className="alunos-input-with-icon">
-                      <img src={iconPencil} alt="" className="alunos-input-icon" />
-                      <input
-                        type="text"
-                        id="rua"
-                        placeholder="Preencha aqui..."
-                        value={formData.rua}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
+                    <input type="text" id="rua" value={formData.rua} onChange={handleChange} required />
                   </div>
-
-                  <div className="alunos-form-group" style={{ flex: 1 }}>
+                  <div className="edit-student-form-group" style={{ flex: 1 }}>
                     <label htmlFor="numero">Número</label>
-                    <input
-                      type="text"
-                      id="numero"
-                      value={formData.numero}
-                      onChange={handleChange}
-                      required
-                    />
+                    <input type="text" id="numero" value={formData.numero} onChange={handleChange} required />
                   </div>
                 </div>
+              </div>
 
-                <div className="alunos-form-group">
-                  <label htmlFor="contato">Contato do responsável</label>
-                  <input
-                    type="text"
-                    id="contato"
-                    placeholder="(99) 9 9999 9999"
-                    value={formData.contato}
-                    onChange={handleChange}
-                    required
+              <div className="figma-section-title">
+                <span className="step-badge">3</span>
+                <h3>Objetivo do Acompanhamento</h3>
+              </div>
+              <div className="edit-student-form-group full-width-textarea">
+                <label htmlFor="objetivo">Descrição dos Objetivos</label>
+                <textarea id="objetivo" value={formData.objetivo} onChange={handleChange} required placeholder="Preencha os objetivos do acompanhamento..." />
+              </div>
+
+              <div className="figma-section-title">
+                <span className="step-badge">4</span>
+                <h3>Contato</h3>
+              </div>
+              <div className="edit-student-form-grid single-column-last">
+                <div className="edit-student-form-group">
+                  <label htmlFor="contato">Contato do Responsável</label>
+                  <input 
+                    type="text" 
+                    id="contato" 
+                    value={formData.contato} 
+                    onChange={handleChange} 
+                    placeholder="(99) 9 9999-9999"
+                    required 
                   />
                 </div>
               </div>
             </div>
 
-            <div className="alunos-form-footer">
-              <button type="submit" className="alunos-save-button" disabled={isSaving}>
-                {isSaving ? "Salvando..." : "Salvar perfil"}
+            <div className="edit-form-footer-row">
+              <button type="button" className="btn-cancelar-figma" onClick={() => navigate(-1)}>
+                Cancelar
+              </button>
+              <button type="submit" className="btn-salvar-figma" disabled={isSaving}>
+                {isSaving ? "Salvando..." : "Salvar Alterações"}
               </button>
             </div>
           </form>
