@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom"; 
 import "./style.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -17,47 +18,14 @@ const formatTime = (totalSeconds) => {
 };
 
 const PlayIcon = () => (
-  <svg
-    width="30"
-    height="33"
-    viewBox="0 0 30 33"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className="session-audio-icon"
-  >
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M23.7354 15.6654C24.3343 16.0606 24.3343 16.9394 23.7354 17.3346L7.80084 27.8514C7.13599 28.2902 6.25 27.8134 6.25 27.0168L6.25 5.98317C6.25 5.18657 7.13599 4.70976 7.80084 5.14856L23.7354 15.6654Z"
-      fill="#191D23"
-    />
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M8 5v14l11-7z" />
   </svg>
 );
 
 const PauseIcon = () => (
-  <svg
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className="session-audio-icon"
-  >
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M5 4L5 20H9V4H5Z"
-      stroke="black"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M15 4L15 20H19V4H15Z"
-      stroke="black"
-      strokeLinejoin="round"
-    />
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
   </svg>
 );
 
@@ -88,17 +56,8 @@ const AudioPlayerControl = ({ audioSrc }) => {
   if (!audioSrc) return null;
 
   const handleTogglePlay = () => setIsPlaying((prev) => !prev);
-
-  const handleTimeUpdate = () => {
-    if (!audioRef.current) return;
-    setCurrentTime(audioRef.current.currentTime || 0);
-  };
-
-  const handleLoadedMetadata = () => {
-    if (!audioRef.current) return;
-    setDuration(audioRef.current.duration || 0);
-  };
-
+  const handleTimeUpdate = () => setCurrentTime(audioRef.current?.currentTime || 0);
+  const handleLoadedMetadata = () => setDuration(audioRef.current?.duration || 0);
   const handleAudioEnded = () => {
     setIsPlaying(false);
     setCurrentTime(0);
@@ -117,20 +76,14 @@ const AudioPlayerControl = ({ audioSrc }) => {
         onEnded={handleAudioEnded}
         preload="metadata"
       />
-
       <button className="session-audio-control-btn" onClick={handleTogglePlay}>
         {isPlaying ? <PauseIcon /> : <PlayIcon />}
       </button>
-
-      <div
-        className="session-audio-bar-placeholder"
-        style={{
-          background: `linear-gradient(to right, #4A90E2 ${progressPercent}%, #ccc ${progressPercent}%)`,
-        }}
-      ></div>
-
+      <div className="session-audio-bar-track">
+        <div className="session-audio-bar-fill" style={{ width: `${progressPercent}%` }} />
+      </div>
       <div className="session-audio-time-text">
-        {formatTime(currentTime)} / {formatTime(duration)}
+        {formatTime(duration - currentTime)}
       </div>
     </div>
   );
@@ -143,25 +96,21 @@ const OptionButtons = ({ options, onSelect, selectedId, isAnswered, feedback }) 
         const safeId = opt.id || opt._id || String(index);
         const isSelected = String(selectedId) === String(safeId);
 
-        let buttonStyle = {};
+        let classes = "session-option-btn";
         if (isAnswered) {
           if (isSelected) {
-            buttonStyle =
-              feedback === true
-                ? { backgroundColor: "#4CAF50", color: "white", borderColor: "#4CAF50" }
-                : { backgroundColor: "#F44336", color: "white", borderColor: "#F44336" };
+            classes += feedback === true ? " option-correct" : " option-incorrect";
           } else {
-            buttonStyle = { opacity: 0.6, cursor: "not-allowed" };
+            classes += " option-disabled";
           }
         } else if (isSelected) {
-          buttonStyle = { borderColor: "#4A90E2", backgroundColor: "#EBF3FB" };
+          classes += " option-selected";
         }
 
         return (
           <button
             key={safeId}
-            className="session-option-btn"
-            style={buttonStyle}
+            className={classes}
             onClick={() => !isAnswered && onSelect(safeId)}
             disabled={isAnswered}
           >
@@ -185,24 +134,45 @@ const ActivityImage = ({ src }) => {
           className="activity-main-image"
           onClick={() => setOpen(true)}
         />
+        <div className="zoom-badge-icon" onClick={() => setOpen(true)}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="11" y1="8" x2="11" y2="14"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </div>
       </div>
 
-      {open && (
+      {open && createPortal(
         <div className="lightbox-overlay" onClick={() => setOpen(false)}>
-          <img src={src} alt="Atividade ampliada" onClick={(e) => e.stopPropagation()} />
-        </div>
+          <div className="lightbox-content-box" onClick={(e) => e.stopPropagation()}>
+            <button className="lightbox-back-btn" onClick={() => setOpen(false)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
+            
+            <img 
+              src={src} 
+              alt="Atividade ampliada" 
+              className="lightbox-image-expanded"
+            />
+          </div>
+        </div>,
+        document.body
       )}
     </>
   );
 };
 
 const MixedActivity = (props) => {
-  const { imageSrc, question, ...rest } = props;
-
+  const { imageSrc, question, audioSrc, ...rest } = props;
   return (
     <>
       {imageSrc && <ActivityImage src={imageSrc} />}
-      {props.audioSrc && <AudioPlayerControl audioSrc={props.audioSrc} />}
+      {audioSrc && <AudioPlayerControl audioSrc={audioSrc} />}
       <h2 className="session-activity-question">{question}</h2>
       <OptionButtons {...rest} />
     </>
@@ -211,7 +181,6 @@ const MixedActivity = (props) => {
 
 const VisualActivity = (props) => {
   const { imageSrc, question, ...rest } = props;
-
   return (
     <>
       {imageSrc && <ActivityImage src={imageSrc} />}
@@ -222,13 +191,12 @@ const VisualActivity = (props) => {
 };
 
 const AudioActivity = (props) => {
-  const { question, ...rest } = props;
-
+  const { question, audioSrc, ...rest } = props;
   return (
     <>
       <h2 className="session-activity-question">{question}</h2>
       <div className="session-centered-controls">
-        {props.audioSrc && <AudioPlayerControl audioSrc={props.audioSrc} />}
+        {audioSrc && <AudioPlayerControl audioSrc={audioSrc} />}
       </div>
       <OptionButtons {...rest} />
     </>
@@ -237,7 +205,6 @@ const AudioActivity = (props) => {
 
 const ConstructionActivity = (props) => {
   const { question, ...rest } = props;
-
   return (
     <>
       <h2 className="session-activity-question">{question}</h2>
@@ -294,10 +261,9 @@ function SessionInitPage() {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log("[taskDetails] resposta da API:", data);
         setTaskDetails(data);
       })
-      .catch((err) => console.error("[taskDetails] erro ao buscar task:", err));
+      .catch((err) => console.error(err));
   }, [currentActivityIndex, sessionActivities]);
 
   useEffect(() => {
@@ -326,14 +292,9 @@ function SessionInitPage() {
     const timeToAnswer = Math.max(0, Math.floor((Date.now() - questionStartTime) / 1000));
     const taskId = currentActivity?.id || currentActivity?._id;
 
-    console.log("[confirm] taskDetails:", taskDetails);
-    console.log("[confirm] selectedAlternativeId:", selectedAlternativeId);
-
     const selectedAlt = taskDetails?.alternatives?.find(
       (alt) => String(alt.id ?? alt._id) === String(selectedAlternativeId)
     );
-
-    console.log("[confirm] selectedAlt encontrado:", selectedAlt);
 
     setIsAnswered(true);
 
@@ -362,7 +323,7 @@ function SessionInitPage() {
         if (apiIsCorrect) setCorrectAnswers((prev) => prev + 1);
       }
     } catch (error) {
-      console.error("Erro ao registrar resposta:", error);
+      console.error(error);
       if (selectedAlt === undefined) setAnswerFeedback(false);
     }
   };
@@ -376,12 +337,10 @@ function SessionInitPage() {
     try {
       const token = localStorage.getItem("authToken");
       const config = { headers: { Authorization: `Bearer ${token}` } };
-
       await axios.post(`${API_BASE_URL}/task-notebook-session/finish`, { sessionId }, config);
-
       setShowObservationModal(true);
     } catch (error) {
-      alert("Sessão encerrada (com aviso de rede).");
+      alert("Sessão encerrada.");
       navigate("/home");
     }
   };
@@ -396,7 +355,7 @@ function SessionInitPage() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } catch (err) {
-        console.error("Erro ao salvar observação:", err);
+        console.error(err);
       }
     }
     navigate("/home");
@@ -430,27 +389,19 @@ function SessionInitPage() {
     else if (activityProps.audioSrc) componentKey = "audio";
 
     switch (componentKey) {
-      case "mixed":
-        return <MixedActivity {...activityProps} />;
-      case "visual":
-        return <VisualActivity {...activityProps} />;
-      case "audio":
-        return <AudioActivity {...activityProps} />;
-      default:
-        return <ConstructionActivity {...activityProps} />;
+      case "mixed": return <MixedActivity {...activityProps} />;
+      case "visual": return <VisualActivity {...activityProps} />;
+      case "audio": return <AudioActivity {...activityProps} />;
+      default: return <ConstructionActivity {...activityProps} />;
     }
   };
 
   const totalMins = Math.floor(sessionTimeElapsed / 60);
   const totalSecs = sessionTimeElapsed % 60;
-  const timeLabel = totalMins > 0
-    ? `${totalMins} min${totalSecs > 0 ? ` ${totalSecs} seg` : ""}`
-    : `${totalSecs} segundos`;
+  const timeLabel = totalMins > 0 ? `${totalMins} min e ${totalSecs} seg` : `${totalSecs} segundos`;
 
   const totalActivities = sessionActivities.length;
-  const accuracyPercent = totalActivities > 0
-    ? Math.round((correctAnswers / totalActivities) * 100)
-    : 0;
+  const accuracyPercent = totalActivities > 0 ? Math.round((correctAnswers / totalActivities) * 100) : 0;
 
   return (
     <div className={`dashboard-container ${isBnW ? "session-bw" : ""}`}>
@@ -458,25 +409,24 @@ function SessionInitPage() {
         <button onClick={() => navigate(-1)} className="session-back-arrow-button">
           <img src={iconArrowLeft} alt="Voltar" className="session-back-arrow-icon" />
         </button>
-
         <img src={labirintoLogo} alt="Logo" className="session-header-logo" />
-
-        <div className="session-timer-controls">
-          <button
-            type="button"
-            className="session-theme-toggle-btn"
-            onClick={() => setIsBnW((prev) => !prev)}
-          >
-            {isBnW ? "Modo normal" : "Preto e branco"}
-          </button>
-
-          <div className="session-activity-timer">{formatTime(sessionTimeElapsed)}</div>
-        </div>
+        <button type="button" className="session-theme-toggle-btn" onClick={() => setIsBnW((prev) => !prev)}>
+          {isBnW ? "Modo normal" : "Preto e branco"}
+        </button>
       </header>
 
       <main className="session-init-main-content">
         <div className="session-activity-card-wrapper">
           <div className="session-activity-card">
+            
+            <div className="card-top-bar">
+              <button onClick={() => navigate(-1)} className="card-inner-back">←</button>
+              <div className="card-inner-timer">
+                <span>{formatTime(sessionTimeElapsed)}</span>
+                <span className="timer-play-dot">▶</span>
+              </div>
+            </div>
+
             {sessionActivities.length === 0 ? (
               <div style={{ padding: "20px", textAlign: "center" }}>
                 <h2>Carregando...</h2>
@@ -485,43 +435,23 @@ function SessionInitPage() {
               renderActivity()
             )}
 
-            <div style={{ marginTop: "20px", textAlign: "center" }}>
-              {!isAnswered ? (
-                <button
-                  onClick={handleConfirmAnswer}
-                  className="session-debug-btn"
-                  disabled={!selectedAlternativeId}
-                  style={{
-                    backgroundColor: "#4A90E2",
-                    opacity: !selectedAlternativeId ? 0.5 : 1,
-                    cursor: !selectedAlternativeId ? "not-allowed" : "pointer",
-                    padding: "10px 30px",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "5px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  Confirmar resposta
-                </button>
-              ) : (
-                <button
-                  onClick={handleNextOrFinish}
-                  className="session-debug-btn"
-                  style={{
-                    backgroundColor: isLastActivity ? "#FF5722" : "#4A90E2",
-                    cursor: "pointer",
-                    padding: "10px 30px",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "5px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {isLastActivity ? "ENCERRAR SESSÃO" : "Próxima tarefa"}
-                </button>
-              )}
+            <div className="session-card-actions-footer">
+              <button
+                onClick={handleConfirmAnswer}
+                className="btn-action-confirm"
+                disabled={!selectedAlternativeId || isAnswered}
+              >
+                Confirmar Resposta
+              </button>
+              <button
+                onClick={handleNextOrFinish}
+                className="btn-action-next"
+                disabled={!isAnswered}
+              >
+                {isLastActivity ? "Encerrar Sessão" : "Próxima"}
+              </button>
             </div>
+
           </div>
         </div>
       </main>
@@ -530,10 +460,7 @@ function SessionInitPage() {
         <div className="session-obs-overlay">
           <div className="session-obs-modal">
             <h1 className="session-obs-title">Encerramento da Sessão</h1>
-            <p className="session-obs-subtitle">
-              Registre suas observações clínicas sobre o desempenho do paciente
-            </p>
-
+            <p className="session-obs-subtitle">Registre suas observações clínicas sobre o desempenho do paciente</p>
             <div className="session-obs-summary-card">
               <h3>Resumo de Desempenho da Sessão</h3>
               <div className="session-obs-summary-stats">
@@ -542,31 +469,20 @@ function SessionInitPage() {
                 <p>Atividades realizadas: {totalActivities}</p>
               </div>
             </div>
-
             <div className="session-obs-section">
               <div className="session-obs-section-title">
-                <strong>
-                  Observações da Sessão{" "}
-                  <span className="session-obs-asterisk">*</span>
-                </strong>
+                <strong>Observações da Sessão <span className="session-obs-asterisk">*</span></strong>
               </div>
               <textarea
                 className="session-obs-textarea"
                 value={observationText}
                 onChange={(e) => setObservationText(e.target.value)}
-                placeholder="Descreva aqui o comportamento e desempenho do paciente para o histórico clínico. Inclua informações sobre: atenção, participação, dificuldades observadas, progressos, estratégias utilizadas e qualquer aspecto relevante para o acompanhamento terapêutico."
+                placeholder="Descreva aqui o comportamento do paciente..."
               />
             </div>
-
             <div className="session-obs-actions">
-              <button className="session-obs-btn-skip" onClick={() => navigate("/home")}>
-                Pular
-              </button>
-              <button
-                className="session-obs-btn-save"
-                onClick={handleSaveObservation}
-                disabled={!observationText.trim()}
-              >
+              <button className="session-obs-btn-skip" onClick={() => navigate("/home")}>Pular</button>
+              <button className="session-obs-btn-save" onClick={handleSaveObservation} disabled={!observationText.trim()}>
                 Salvar Observação
               </button>
             </div>

@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { pdf } from "@react-pdf/renderer";
 import ReportPDF from "./ReportPDF";
-import PageTurner from "../../components/ui/PageTurner/index.js"; // IMPORTAÇÃO ADICIONADA
+import PageTurner from "../../components/ui/PageTurner/index.js"; 
 import patientAvatar from "../../assets/images/icon_random.png";
 import iconCalendario from "../../assets/images/icon-calendario.png";
 import iconCheckbox from "../../assets/images/icon-checkbox.png";
@@ -168,54 +168,78 @@ function MainReport() {
 
     setExportingPDF(true);
     setLoadingAnalysis(true);
+
     try {
       const token = localStorage.getItem("authToken");
       const headers = { Authorization: `Bearer ${token}` };
-      const params = {};
+      
+      const filterData = {};
       const period = PERIODS.find((p) => p.id === selectedPeriod);
       if (period?.limit) {
-        params.limit = period.limit;
+        filterData.limit = period.limit;
       } else if (selectedPeriod === "custom") {
-        params.startDate = new Date(customStartDate).toISOString();
-        params.endDate = new Date(customEndDate + "T23:59:59").toISOString();
+        filterData.startDate = new Date(customStartDate).toISOString();
+        filterData.endDate = new Date(customEndDate + "T23:59:59").toISOString();
       }
 
-      const analysisRes = await axios.get(
-        `${API_BASE_URL}/task-notebook-session/analysis/student/${selectedStudent.id}`,
-        { headers, params },
-      );
-      const data = analysisRes.data;
-      setAnalysisData(data);
-
-      const sessionsList = data.sessions ?? [];
-      if (sessionsList.length === 0) {
-        setShowNoSessionsModal(true);
+      let currentData;
+      try {
+        const analysisRes = await axios.get(
+          `${API_BASE_URL}/task-notebook-session/analysis/student/${selectedStudent.id}`,
+          { headers, params: filterData },
+        );
+        currentData = analysisRes.data;
+        setAnalysisData(currentData);
+      } catch (err) {
+        console.error("Erro no GET analysis:", err);
+        alert("Erro ao buscar a análise de sessões do aluno no servidor.");
+        setExportingPDF(false);
+        setLoadingAnalysis(false);
         return;
       }
 
-      await axios.post(
-        `${API_BASE_URL}/task-notebook-session/analysis/student/${selectedStudent.id}/snapshot`,
-        null,
-        { headers, params },
-      );
+      const sessionsList = currentData.sessions ?? [];
+      if (sessionsList.length === 0) {
+        setShowNoSessionsModal(true);
+        setExportingPDF(false);
+        setLoadingAnalysis(false);
+        return;
+      }
 
-      const blob = await pdf(
-        <ReportPDF
-          student={selectedStudent}
-          analysisData={data}
-          sessions={sessionsList}
-          includeMetrics={includeMetrics}
-          includeObservations={includeObservations}
-        />
-      ).toBlob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `relatorio-${selectedStudent.name}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Erro ao gerar PDF:", err);
+      try {
+        await axios.post(
+          `${API_BASE_URL}/task-notebook-session/analysis/student/${selectedStudent.id}/history`,
+          filterData,
+          { headers },
+        );
+      } catch (err) {
+        console.error("Erro no POST persistência do snapshot:", err);
+        console.warn("Dica: Se retornar 404, verifique o nome exato do endpoint de criação de histórico/snapshots no back-end.");
+      }
+
+      try {
+        const blob = await pdf(
+          <ReportPDF
+            student={selectedStudent}
+            analysisData={currentData}
+            sessions={sessionsList}
+            includeMetrics={includeMetrics}
+            includeObservations={includeObservations}
+          />
+        ).toBlob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `relatorio-${selectedStudent.name}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error("Erro interno do componente ReportPDF:", err);
+        alert("Erro crítico: Os dados foram processados, mas a estrutura do documento ReportPDF impediu a renderização.");
+      }
+
+    } catch (globalErr) {
+      console.error("Erro inesperado no fluxo de exportação:", globalErr);
     } finally {
       setExportingPDF(false);
       setLoadingAnalysis(false);

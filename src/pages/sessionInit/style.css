@@ -1,297 +1,378 @@
 body {
-    margin: 0;
-    font-family: 'Nunito', sans-serif;
-    background-color: #fcfcff;
+  margin: 0;
+  font-family: 'Nunito', sans-serif;
+  background-color: #f6f8fb;
 }
 
 .dashboard-container {
-    min-height: 100vh;
+  min-height: 100vh;
 }
 
 .session-activity-header {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    padding: 1rem 2.5rem;
-    background-color: #fff;
-    border-bottom: 1px solid #eaeaea;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 2.5rem;
+  background-color: #fff;
+  border-bottom: 1px solid #eaeaea;
 }
 
 .session-back-arrow-button {
-    grid-column: 1;
-    justify-self: start;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 
 .session-back-arrow-icon {
-    width: 44px;
-    height: 44px;
-    opacity: 0.7;
+  width: 38px;
+  height: 38px;
+  opacity: 0.6;
 }
 
 .session-header-logo {
-    grid-column: 2;
-    justify-self: center;
-    height: 60px;
-    width: auto;
+  height: 48px;
+  width: auto;
 }
 
-.session-timer-controls {
-    grid-column: 3;
-    justify-self: end;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.session-play-pause-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.session-audio-icon {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.session-activity-timer {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #333;
+.session-theme-toggle-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  cursor: pointer;
+  font-family: "Nunito", sans-serif;
+  font-size: 0.85rem;
+  color: #666;
 }
 
 .session-init-main-content {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 2.5rem;
-    min-height: calc(100vh - 80px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  min-height: calc(100vh - 75px);
 }
 
 .session-activity-card-wrapper {
-    width: 100%;
-    max-width: 800px;
+  width: 100%;
+  max-width: 750px;
 }
 
-.session-activity-card {
-    background-color: #fff;
-    border-radius: 20px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    padding: 40px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.activity-image-wrapper {
-    width: 250px;
-    height: 250px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-    background-color: #ffffff;
-}
-
-.activity-main-image {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    cursor: zoom-in;
-    transition: opacity 0.15s ease;
-}
-
-.activity-main-image:hover {
-    opacity: 0.85;
-}
-
-.lightbox-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.82);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    cursor: zoom-out;
-    animation: lightbox-fade-in 0.18s ease;
-}
-
-@keyframes lightbox-fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-.lightbox-overlay img {
-    max-width: 90vw;
-    max-height: 90vh;
-    object-fit: contain;
-    border-radius: 6px;
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
-    cursor: default;
-}
-
-.session-activity-question {
-    font-family: 'Nunito', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 500;
-    color: #333;
-    margin: 20px 0 30px 0;
-}
-
-.session-audio-player-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 80%;
-    max-width: 450px;
-    margin-bottom: 30px;
-}
-
-.session-audio-player-controls.session-centered-controls {
-    justify-content: center;
-}
-
-.session-audio-control-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    width: 35px;
-    height: 35px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.session-audio-bar-placeholder {
-    height: 6px;
-    background-color: #e0e0e0;
-    border-radius: 3px;
-    flex-grow: 1;
-}
-
-.session-audio-bar-placeholder.session-wide-bar {
-    max-width: 300px;
-}
-
-.session-audio-time {
-    font-size: 0.9rem;
-    color: #777;
-}
-
-.session-option-buttons-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 20px;
-    width: 100%;
-}
-
-.session-option-btn {
-    padding: 10px 30px;
-    background-color: #F3FBFB;
-    border: 1px solid #D8F5F3;
-    border-radius: 25px;
-    font-family: 'Nunito', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 200;
-    color: #333;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: 45%;
-    min-width: 200px;
-}
-
-.session-option-btn.session-half-width {
-    width: 200px;
-    min-width: 150px;
-}
-
-.session-option-btn:hover {
-    background-color: #D8F5F3;
-}
-
-.session-debug-btn {
-    margin-top: 30px;
-    padding: 10px;
-    border-radius: 24px;
-    background-color: #F3FBFB;
-    border: 1px solid #D8F5F3;
-    font-family: "Nunito", sans-serif;
-    font-size: 0.7rem;
-}
-
-.session-debug-btn:hover {
-    background-color: #D8F5F3;
-}
-
-.dark-mode {
-  background-color: #333;
-  color: #fff;
-}
-
-.session-activity-header,
 .session-activity-card {
   background-color: #fff;
+  border-radius: 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  padding: 30px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  border: 1px solid #f0f2f5;
+}
+
+.card-top-bar {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.card-inner-back {
+  background: #f1f3f5;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-inner-timer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: #333;
 }
 
-.dark-mode .session-activity-header,
-.dark-mode .session-activity-card {
-  background-color: #222;
+.timer-play-dot {
+  font-size: 0.75rem;
+  color: #c4c4c4;
+}
+
+.activity-image-wrapper {
+  width: 220px;
+  height: 220px;
+  border: 1.5px solid #eef1f4;
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+  background-color: #fff;
+}
+
+.activity-main-image {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+.zoom-badge-icon {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: #fff;
+  border: 1px solid #eef1f4;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+
+.session-activity-question {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+}
+
+.session-audio-player-controls {
+  display: flex;
+  align-items: center;
+  background-color: #72ded4;
+  border-radius: 30px;
+  padding: 8px 18px;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(114, 222, 212, 0.25);
   color: #fff;
 }
 
-.dark-mode .session-option-btn {
-  background-color: #444;
-  color: #ddd;
+.session-audio-control-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #fff;
+  display: flex;
+  align-items: center;
 }
 
-.dark-mode .session-audio-control-btn {
-  color: #fff;
+.session-audio-bar-track {
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 2px;
+  flex-grow: 1;
+  position: relative;
 }
+
+.session-audio-bar-fill {
+  height: 100%;
+  background-color: #fff;
+  border-radius: 2px;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.session-audio-time-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.session-option-buttons-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.session-option-btn {
+  padding: 14px 20px;
+  background-color: #fff;
+  border: 1.5px solid #eef1f4;
+  border-radius: 50px; 
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2c3e50;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.01);
+  text-transform: uppercase;
+}
+
+.session-option-btn:hover:not(:disabled) {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.option-selected {
+  border-color: #72ded4 !important;
+  background-color: #E8F9F8 !important; 
+  color: #008d85 !important;
+}
+
+.option-correct {
+  background-color: #81C784 !important; 
+  border-color: #81C784 !important;
+  color: #fff !important;
+}
+
+.option-incorrect {
+  background-color: #fde8e8 !important;
+  border-color: #f05252 !important;
+  color: #9b1c1c !important;
+}
+
+.option-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.session-card-actions-footer {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  gap: 16px;
+  border-top: 1px solid #f0f2f5;
+  padding-top: 1.5rem;
+}
+
+.btn-action-confirm, .btn-action-next {
+  padding: 14px 32px;
+  font-family: "Nunito", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 50px; 
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-action-confirm {
+  background-color: #81C784;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(129, 199, 132, 0.3);
+}
+
+.btn-action-confirm:disabled {
+  background-color: #e2e8f0;
+  color: #94a3b8;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-action-next {
+  background-color: #e2e8f0;
+  color: #94a3b8;
+  box-shadow: none;
+}
+
+.btn-action-next:not(:disabled) {
+  background-color: #72ded4; 
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(114, 222, 212, 0.3);
+}
+
+
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6); 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  backdrop-filter: blur(4px);
+  animation: lightbox-fade-in 0.2s ease;
+}
+
+@keyframes lightbox-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.lightbox-content-box {
+  background-color: #fff;
+  border-radius: 32px; 
+  padding: 60px 40px 40px 40px; 
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  max-width: 90vw;
+  max-height: 90vh;
+  animation: scale-up 0.2s ease;
+}
+
+@keyframes scale-up {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.lightbox-back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #72ded4;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(114, 222, 212, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.lightbox-back-btn:hover {
+  transform: scale(1.05);
+}
+
+.lightbox-image-expanded {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
 
 .session-bw {
   filter: grayscale(1);
 }
 
-.session-theme-toggle-btn {
-  padding: 8px 14px;
-  border-radius: 18px;
-  border: 1px solid #e0e0e0;
-  background: #f3fbfb;
-  cursor: pointer;
-  font-family: "Nunito", sans-serif;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-
-.session-audio-time-text {
-  margin-left: 12px;
-  font-size: 0.9rem;
-  color: #777;
-}
-
 .session-obs-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -301,85 +382,46 @@ body {
 
 .session-obs-modal {
   background: #fff;
-  border-radius: 16px;
-  border: 2px solid #5BBFB5;
+  border-radius: 24px;
   padding: 32px;
   width: 100%;
-  max-width: 580px;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-width: 540px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
 }
 
 .session-obs-title {
-  font-size: 28px;
-  font-weight: bold;
-  color: #191D23;
-  margin: 0 0 6px 0;
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
 }
 
 .session-obs-subtitle {
-  color: #666;
+  color: #777;
   font-size: 14px;
-  margin: 0 0 24px 0;
+  margin: 0 0 20px 0;
 }
 
 .session-obs-summary-card {
-  background: #EBF8F6;
-  border: 2px solid #5BBFB5;
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 20px;
 }
 
 .session-obs-summary-card h3 {
-  font-size: 16px;
-  font-weight: bold;
-  color: #191D23;
-  margin: 0 0 12px 0;
-}
-
-.session-obs-summary-stats {
-  background: #fff;
-  border-radius: 8px;
-  padding: 14px 16px;
-}
-
-.session-obs-summary-stats p {
-  margin: 4px 0;
-  font-size: 14px;
-  color: #333;
-  font-weight: 500;
-}
-
-.session-obs-section-title {
-  margin-bottom: 10px;
-}
-
-.session-obs-section-title strong {
-  font-size: 16px;
-  color: #191D23;
-}
-
-.session-obs-asterisk {
-  color: #E53E3E;
+  margin: 0 0 8px 0;
+  font-size: 15px;
 }
 
 .session-obs-textarea {
   width: 100%;
-  min-height: 110px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  min-height: 100px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   padding: 12px;
-  font-size: 14px;
-  color: #555;
-  resize: vertical;
-  box-sizing: border-box;
   font-family: inherit;
-}
-
-.session-obs-textarea:focus {
-  outline: none;
-  border-color: #5BBFB5;
+  resize: none;
+  box-sizing: border-box;
 }
 
 .session-obs-actions {
@@ -390,27 +432,27 @@ body {
 }
 
 .session-obs-btn-skip {
-  padding: 10px 24px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: transparent;
-  color: #666;
-  font-size: 14px;
+  background: none;
+  border: 1px solid #cbd5e1;
+  padding: 10px 20px;
+  border-radius: 20px;
   cursor: pointer;
+  font-weight: 700;
+  color: #64748b;
 }
 
 .session-obs-btn-save {
-  padding: 10px 24px;
+  background-color: #72ded4;
   border: none;
-  border-radius: 8px;
-  background: #4A90E2;
-  color: white;
-  font-size: 14px;
-  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 20px;
   cursor: pointer;
+  font-weight: 700;
+  color: #fff;
 }
 
 .session-obs-btn-save:disabled {
-  opacity: 0.5;
+  background-color: #e2e8f0;
+  color: #94a3b8;
   cursor: not-allowed;
 }
