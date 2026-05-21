@@ -7,6 +7,8 @@ import iconRandom from '../../assets/images/icon_random.png';
 import addIcon from '../../assets/images/icon-button-aluno.png';
 import { useNavigate } from 'react-router-dom';
 
+import CreateStudentModal from '../../components/ui/CreateStudentModal/index.jsx';
+
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function mapGender(gender) {
@@ -96,51 +98,53 @@ function AlunosPage() {
   const [progressMap, setProgressMap] = useState({});
   const itemsPerPage = 4;
 
-  useEffect(() => {
-    const fetchAlunos = async () => {
-      try {
-        const educatorId = localStorage.getItem('userId');
-        const token = localStorage.getItem('authToken');
-        if (!educatorId || !token) {
-          alert('Sessão inválida. Por favor, faça login novamente.');
-          navigate('/');
-          return;
-        }
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        const response = await axios.get(`${API_BASE_URL}/student/`, config);
-
-        let listaCompleta = [];
-        if (Array.isArray(response.data)) {
-          listaCompleta = response.data;
-        } else if (response.data && Array.isArray(response.data.students)) {
-          listaCompleta = response.data.students;
-        }
-
-        const meusAlunos = listaCompleta
-          .filter(aluno => String(aluno.educatorId) === String(educatorId))
-          .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
-
-        setAlunos(meusAlunos);
-      } catch (error) {
-        console.error("Erro ao buscar alunos:", error);
-      } finally {
-        setLoading(false);
+  const fetchAlunos = useCallback(async () => {
+    try {
+      setLoading(true);
+      const educatorId = localStorage.getItem('userId');
+      const token = localStorage.getItem('authToken');
+      if (!educatorId || !token) {
+        alert('Sessão inválida. Por favor, faça login novamente.');
+        navigate('/');
+        return;
       }
-    };
-    fetchAlunos();
+
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const response = await axios.get(`${API_BASE_URL}/student/`, config);
+
+      let listaCompleta = [];
+      if (Array.isArray(response.data)) {
+        listaCompleta = response.data;
+      } else if (response.data && Array.isArray(response.data.students)) {
+        listaCompleta = response.data.students;
+      }
+
+      const meusAlunos = listaCompleta
+        .filter(aluno => String(aluno.educatorId) === String(educatorId))
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+
+      setAlunos(meusAlunos);
+    } catch (error) {
+      console.error("Erro ao buscar alunos:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [navigate]);
+
+  useEffect(() => {
+    fetchAlunos();
+  }, [fetchAlunos]);
 
   const handleAction = useCallback((studentId, type) => {
     if (type === 'click') {
       navigate('/alunosDetails', { state: { studentId } });
       return;
     }
-    // IntersectionObserver trigger — load progress lazily
     setProgressMap(prev => {
       if (prev[studentId] !== undefined) return prev;
       const token = localStorage.getItem('authToken');
-      // GET é idempotente — não persiste nada, retorna dados em tempo real
       axios
         .get(`${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -177,9 +181,10 @@ function AlunosPage() {
               <h1>Alunos</h1>
               <p className="subtitle">Visualize e gerencie informações e progresso de cada aluno.</p>
             </div>
+            
             <button
               className="create-patient-bnt"
-              onClick={() => navigate('/CreatePacient')}
+              onClick={() => setIsCreateModalOpen(true)}
             >
               <img src={addIcon} alt="+" className="add-icon" />
               Cadastrar Aluno
@@ -234,6 +239,13 @@ function AlunosPage() {
           />
         </div>
       </main>
+
+      <CreateStudentModal 
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSaveSuccess={fetchAlunos} 
+		
+      />
     </div>
   );
 }

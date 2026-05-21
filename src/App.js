@@ -10,7 +10,6 @@ import AlunosDetails from "./pages/patientsDetails";
 import CreateActivitiePage from "./pages/CreateNewActivitie";
 import ActivitiePersonalizePage from "./pages/NewActivitiePersonalize";
 import ActivitiesMain from "./pages/mainActivities/index.js";
-import CreatePacient from "./pages/createPacient/index.js";
 import AddNotebook from "./pages/addNotebook/index.js";
 import GroupActivitiesPage from "./pages/GroupActivities";
 import ManageActivitiesPage from "./pages/ManageActivities";
@@ -49,7 +48,6 @@ function App() {
           element={<ActivitiePersonalizePage />}
         />
         <Route path="/activitiesMain" element={<ActivitiesMain />} />
-        <Route path="/createPacient" element={<CreatePacient />} />
         <Route path="/addNotebook" element={<AddNotebook />} />
         <Route path="/GroupActivities" element={<GroupActivitiesPage />} />
         <Route path="/ManageActivities" element={<ManageActivitiesPage />} />

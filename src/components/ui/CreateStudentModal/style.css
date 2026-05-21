@@ -1,100 +1,69 @@
-body {
-  margin: 0;
-  font-family: -apple-system, 'Nunito', sans-serif;
-  background-color: #fcfcff; 
-  color: #333;
-}
-
-.alunos-dashboard-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.alunos-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2.5rem;
-  background-color: #fff;
-  border-bottom: 1px solid #eaeaea;
-}
-
-.alunos-logo {
-  width: 150px;
-  height: 70px;
-  object-fit: contain;
-}
-
-.alunos-navbar {
-  display: flex;
-  gap: 2rem;
-  margin-left: -10%; 
-}
-
-.alunos-nav-link {
-  text-decoration: none;
-  color: #555;
-  font-weight: 600;
-  font-size: 20px;
-  padding-bottom: 4px;
-  margin-left: 10%;
-}
-
-.alunos-nav-link.active {
-  color: #63E9E2; 
-  border-bottom: 3px solid #63E9E2;
-}
-
-.alunos-user-controls {
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4); 
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  justify-content: center;
+  z-index: 2000; 
 }
 
-.alunos-icon {
-  height: 41px;
-  width: 48px;
-  cursor: pointer;
-  object-fit: contain;
-}
-
-.alunos-profile-icon {
-  border-radius: 50%;
-  background-color: #333; 
-  height: 59px;
-  width: 59px;
-}
-
-
-.alunos-main-content {
-  display: flex;
-  flex: 1;
-  padding: 2.5rem;
-  gap: 1.5rem; 
-  align-items: flex-start; 
-  justify-content: center; 
-}
-
-
-.alunos-back-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  margin-top: 1rem; 
-}
-
-
-.alunos-profile-card {
+.modal-wrapper {
   background-color: #fff;
-  border-radius: 25px;
+  border-radius: 28px; 
   padding: 2.5rem 3.5rem;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.07);
   width: 100%;
-  max-width: 1100px; 
+  max-width: 1000px;
+  max-height: 90vh;
+  overflow-y: auto; 
 }
 
+.modal-figma-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.modal-step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.step-number {
+  background-color: #63E9E2; 
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.modal-figma-header h3 {
+  font-family: 'Nunito', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: #1A1A1A;
+}
+
+.modal-close-x {
+  background: none;
+  border: none;
+  font-size: 32px;
+  cursor: pointer;
+  color: #333;
+  line-height: 1;
+}
 
 .alunos-profile-pic-section {
   display: flex;
@@ -106,8 +75,8 @@ body {
 }
 
 .alunos-avatar {
-  width: 161px;
-  height: 161px;
+  width: 120px; 
+  height: 120px;
   border-radius: 50%;
   border: 3px solid #f0f0f0;
 }
@@ -164,7 +133,6 @@ body {
   gap: 1.5rem; 
 }
 
-
 .alunos-form-group {
   display: flex;
   flex-direction: column;
@@ -174,10 +142,9 @@ body {
 .alunos-form-group label {
   font-weight: 600;
   color: #2b2b2b;
-  font-size: 24px;
+  font-size: 20px; 
   margin-left: 0.25rem;
 }
-
 
 .alunos-form-group input[type="text"],
 .alunos-form-group select,
@@ -192,8 +159,6 @@ body {
   font-family: 'Nunito', sans-serif;
   box-sizing: border-box; 
 }
-/* Adicionei input[type="number"] acima para garantir que o campo Idade 
-   receba o mesmo estilo dos inputs de texto, mantendo a consistência */
 
 .alunos-form-group input[type="text"]::placeholder,
 .alunos-form-group input[type="number"]::placeholder {
@@ -218,7 +183,6 @@ body {
   padding-left: 2.75rem !important; 
 }
 
-
 .alunos-form-row {
   display: flex;
   gap: 1rem;
@@ -228,33 +192,31 @@ body {
   flex: 1; 
 }
 
-
 .alunos-form-footer {
-  text-align: center;
-  margin-top: 3rem;
-  padding-top: 2rem;
+  text-align: right; 
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid #f0f0f0;
 }
 
 .alunos-save-button {
-   background-color: #FFF6D8;
+  background-color: #FFF6D8;
   color: #5c5c5c; 
   padding: 0.75rem 1.5rem;
   border-radius: 50px;
   border: none;
-  font-size: 24px;
-  font-weight: 200;
+  font-size: 20px;
+  font-weight: 400;
   font-family: 'Nunito', sans-serif;
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 0.2s;
-  margin-left: auto; 
   width: 250px;
   height: 50px;
 }
 
 .alunos-save-button:hover {
-   background-color: #f7e9b0;
+  background-color: #f7e9b0;
   box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
 }
