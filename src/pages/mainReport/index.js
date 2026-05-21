@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { pdf } from "@react-pdf/renderer";
 import ReportPDF from "./ReportPDF";
+import PageTurner from "../../components/ui/PageTurner/index.js"; // IMPORTAÇÃO ADICIONADA
 import patientAvatar from "../../assets/images/icon_random.png";
 import iconCalendario from "../../assets/images/icon-calendario.png";
 import iconCheckbox from "../../assets/images/icon-checkbox.png";
@@ -20,18 +21,8 @@ const PERIODS = [
 ];
 
 const MONTHS = [
-  "janeiro",
-  "fevereiro",
-  "março",
-  "abril",
-  "maio",
-  "junho",
-  "julho",
-  "agosto",
-  "setembro",
-  "outubro",
-  "novembro",
-  "dezembro",
+  "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
 
 function formatDate(isoStr) {
@@ -60,6 +51,9 @@ function MainReport() {
   const [exportingPDF, setExportingPDF] = useState(false);
   const [showNoSessionsModal, setShowNoSessionsModal] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
+
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -73,9 +67,7 @@ function MainReport() {
         const res = await axios.get(`${API_BASE_URL}/student/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const all = Array.isArray(res.data)
-          ? res.data
-          : (res.data?.students ?? []);
+        const all = Array.isArray(res.data) ? res.data : (res.data?.students ?? []);
         const mine = all
           .filter((s) => String(s.educatorId) === String(educatorId))
           .map((s) => ({
@@ -98,8 +90,6 @@ function MainReport() {
     fetchStudents();
   }, [navigate, location.state?.preSelectedStudentId]);
 
-  // GET /analysis não persiste — seguro para auto-fetch na preview.
-  // O POST /snapshot (que persiste) só é chamado dentro do handleExportPDF.
   useEffect(() => {
     if (!selectedStudent) return;
     if (selectedPeriod === "custom" && (!customStartDate || !customEndDate)) return;
@@ -121,6 +111,7 @@ function MainReport() {
           { headers: { Authorization: `Bearer ${token}` }, params },
         );
         setAnalysisData(res.data);
+        setCurrentPage(1); 
       } catch (err) {
         console.error("Erro ao buscar preview:", err);
       } finally {
@@ -189,7 +180,6 @@ function MainReport() {
         params.endDate = new Date(customEndDate + "T23:59:59").toISOString();
       }
 
-      // GET — dados completos com sessions para o PDF (não persiste)
       const analysisRes = await axios.get(
         `${API_BASE_URL}/task-notebook-session/analysis/student/${selectedStudent.id}`,
         { headers, params },
@@ -197,13 +187,12 @@ function MainReport() {
       const data = analysisRes.data;
       setAnalysisData(data);
 
-      const sessions = data.sessions ?? [];
-      if (sessions.length === 0) {
+      const sessionsList = data.sessions ?? [];
+      if (sessionsList.length === 0) {
         setShowNoSessionsModal(true);
         return;
       }
 
-      // POST /snapshot — persiste 1 único snapshot no histórico
       await axios.post(
         `${API_BASE_URL}/task-notebook-session/analysis/student/${selectedStudent.id}/snapshot`,
         null,
@@ -214,10 +203,10 @@ function MainReport() {
         <ReportPDF
           student={selectedStudent}
           analysisData={data}
-          sessions={sessions}
+          sessions={sessionsList}
           includeMetrics={includeMetrics}
           includeObservations={includeObservations}
-        />,
+        />
       ).toBlob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -236,6 +225,17 @@ function MainReport() {
   const sessions = analysisData?.sessions ?? [];
   const sessionCount = sessions.length;
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentSessionsPreview = sessions.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sessions.length / itemsPerPage);
+
+  const changePage = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <Navbar activePage="relatorios" />
@@ -244,7 +244,6 @@ function MainReport() {
         <h1 className="report-page-title">Gerar Relatório</h1>
 
         <div className="report-top-row">
-          {/* Card 1: Buscar Aluno */}
           <div className="report-card report-card--search" ref={dropdownRef}>
             <h2 className="report-card-title">
               <span className="icon-circle icon-circle--blue">👤</span>
@@ -282,9 +281,7 @@ function MainReport() {
                         src={s.photoUrl || patientAvatar}
                         alt=""
                         className="student-dropdown-avatar"
-                        onError={(e) => {
-                          e.currentTarget.src = patientAvatar;
-                        }}
+                        onError={(e) => { e.currentTarget.src = patientAvatar; }}
                       />
                       <span>{s.name}</span>
                     </li>
@@ -299,14 +296,10 @@ function MainReport() {
                   src={selectedStudent.photoUrl || patientAvatar}
                   alt={selectedStudent.name}
                   className="student-selected-avatar"
-                  onError={(e) => {
-                    e.currentTarget.src = patientAvatar;
-                  }}
+                  onError={(e) => { e.currentTarget.src = patientAvatar; }}
                 />
                 <div className="student-selected-info">
-                  <p className="student-selected-name">
-                    {selectedStudent.name}
-                  </p>
+                  <p className="student-selected-name">{selectedStudent.name}</p>
                   <p className="student-selected-meta">
                     {selectedStudent.age} anos
                     {analysisData && ` • ${sessionCount} sessões registradas`}
@@ -317,7 +310,6 @@ function MainReport() {
             )}
           </div>
 
-          {/* Card 2: Período */}
           <div className="report-card report-card--period">
             <h2 className="report-card-title">
               <span className="icon-circle icon-circle--gold">
@@ -361,24 +353,19 @@ function MainReport() {
         {!selectedStudent && (
           <div className="report-empty-state">
             <p className="report-empty-title">Busque um aluno para começar</p>
-            <p className="report-empty-sub">
-              Use o campo de busca acima para encontrar o aluno
-            </p>
+            <p className="report-empty-sub">Use o campo de busca acima para encontrar o aluno</p>
           </div>
         )}
 
         {selectedStudent && (
           <>
-            {/* Prévia das Sessões */}
             <div className="report-section-card">
               <div className="report-section-header">
                 <div className="report-section-title-row">
                   <span className="icon-circle icon-circle--blue2">
                     <img src={iconDocumento} alt="" className="icon-circle-img" />
                   </span>
-                  <h2 className="report-section-title">
-                    Prévia das Sessões Incluídas
-                  </h2>
+                  <h2 className="report-section-title">Prévia das Sessões Incluídas</h2>
                 </div>
                 <span className="sessions-badge">
                   {sessionCount} {sessionCount === 1 ? "sessão" : "sessões"}
@@ -388,60 +375,48 @@ function MainReport() {
               {loadingAnalysis ? (
                 <p className="report-loading-text">Carregando sessões...</p>
               ) : sessions.length === 0 ? (
-                <p className="report-no-data-text">
-                  Nenhuma sessão encontrada para o período selecionado.
-                </p>
+                <p className="report-no-data-text">Nenhuma sessão encontrada para o período selecionado.</p>
               ) : (
-                <ul className="sessions-preview-list">
-                  {sessions.map((session) => {
-                    const total = session.answers?.length ?? 0;
-                    const correct =
-                      session.answers?.filter((a) => a.isCorrect).length ?? 0;
-                    const accuracy =
-                      total > 0 ? Math.round((correct / total) * 100) : 0;
-                    return (
-                      <li
-                        key={session.id}
-                        className="session-preview-item"
-                        onClick={() =>
-                          navigate("/ReportSession", {
-                            state: { sessionId: session.id },
-                          })
-                        }
-                      >
-                        <div className="session-preview-info">
-                          <p className="session-preview-name">{session.name}</p>
-                          <p className="session-preview-date">
-                            {formatDate(session.startedAt)}
-                          </p>
-                        </div>
-                        <div className="session-preview-score">
-                          <p className="session-score-fraction">
-                            {correct}/{total}
-                          </p>
-                          <p className="session-score-pct">
-                            {accuracy}% acerto
-                          </p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
+                <>
+                  <ul className="sessions-preview-list">
+                    {currentSessionsPreview.map((session) => {
+                      const total = session.answers?.length ?? 0;
+                      const correct = session.answers?.filter((a) => a.isCorrect).length ?? 0;
+                      const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+                      return (
+                        <li
+                          key={session.id}
+                          className="session-preview-item"
+                          onClick={() => navigate("/ReportSession", { state: { sessionId: session.id } })}
+                        >
+                          <div className="session-preview-info">
+                            <p className="session-preview-name">{session.name}</p>
+                            <p className="session-preview-date">{formatDate(session.startedAt)}</p>
+                          </div>
+                          <div className="session-preview-score">
+                            <p className="session-score-fraction">{correct}/{total}</p>
+                            <p className="session-score-pct">{accuracy}% acerto</p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  <PageTurner 
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={changePage}
+                  />
+                </>
               )}
             </div>
 
-            {/* Conteúdo do Relatório */}
             <div className="report-section-card">
-              <div
-                className="report-section-title-row"
-                style={{ marginBottom: "1.25rem" }}
-              >
+              <div className="report-section-title-row" style={{ marginBottom: "1.25rem" }}>
                 <span className="icon-circle icon-circle--purple">
                   <img src={iconCheckbox} alt="" className="icon-circle-img" />
                 </span>
-                <h2 className="report-section-title">
-                  3. Conteúdo do Relatório
-                </h2>
+                <h2 className="report-section-title">3. Conteúdo do Relatório</h2>
               </div>
 
               <ul className="report-content-options">
@@ -454,13 +429,8 @@ function MainReport() {
                     className="report-checkbox"
                   />
                   <div className="checkbox-text">
-                    <label htmlFor="cb-metrics" className="checkbox-label">
-                      Métricas de Desempenho
-                    </label>
-                    <p className="checkbox-description">
-                      Inclui gráficos de progresso, taxa de acertos e
-                      estatísticas gerais
-                    </p>
+                    <label htmlFor="cb-metrics" className="checkbox-label">Métricas de Desempenho</label>
+                    <p className="checkbox-description">Inclui gráficos de progresso, taxa de acertos e estatísticas gerais</p>
                   </div>
                 </li>
                 <li className="checkbox-row">
@@ -472,12 +442,8 @@ function MainReport() {
                     className="report-checkbox"
                   />
                   <div className="checkbox-text">
-                    <label htmlFor="cb-observations" className="checkbox-label">
-                      Observações Qualitativas
-                    </label>
-                    <p className="checkbox-description">
-                      Anotações e observações registradas durante as sessões
-                    </p>
+                    <label htmlFor="cb-observations" className="checkbox-label">Observações Qualitativas</label>
+                    <p className="checkbox-description">Anotações e observações registradas durante as sessões</p>
                   </div>
                 </li>
                 <li className="checkbox-row">
@@ -489,19 +455,13 @@ function MainReport() {
                     className="report-checkbox"
                   />
                   <div className="checkbox-text">
-                    <label htmlFor="cb-anamnese" className="checkbox-label">
-                      Dados da Anamnese
-                    </label>
-                    <p className="checkbox-description">
-                      Informações gerais, histórico médico e desenvolvimento do
-                      aluno
-                    </p>
+                    <label htmlFor="cb-anamnese" className="checkbox-label">Dados da Anamnese</label>
+                    <p className="checkbox-description">Informações gerais, histórico médico e desenvolvimento do aluno</p>
                   </div>
                 </li>
               </ul>
             </div>
 
-			{/* Exportar PDF */}
             <div className="export-button-container">
               <button
                 className="export-pdf-button"
@@ -520,9 +480,7 @@ function MainReport() {
                   <span className="export-main-text">
                     {exportingPDF ? "Gerando PDF..." : "Exportar Relatório em PDF"}
                   </span>
-                  <span className="export-sub-text">
-                    Relatório de {selectedStudent.name}
-                  </span>
+                  <span className="export-sub-text">Relatório de {selectedStudent.name}</span>
                 </div>
               </button>
             </div>
@@ -536,16 +494,9 @@ function MainReport() {
             <div className="modal-icon">📋</div>
             <p className="modal-title">Nenhuma sessão encontrada</p>
             <p className="modal-description">
-              Este aluno não possui sessões registradas para o período
-              selecionado. Escolha um período diferente ou aguarde a realização
-              de sessões.
+              Este aluno não possui sessões registradas para o período selecionado. Escolha um período diferente ou aguarde a realização de sessões.
             </p>
-            <button
-              className="modal-confirm-btn"
-              onClick={() => setShowNoSessionsModal(false)}
-            >
-              Ok
-            </button>
+            <button className="modal-confirm-btn" onClick={() => setShowNoSessionsModal(false)}>Ok</button>
           </div>
         </div>
       )}

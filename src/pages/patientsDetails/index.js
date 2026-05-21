@@ -127,6 +127,40 @@ function snapshotToAnalysisData(snapshot) {
   };
 }
 
+function Pagination({ currentPage, totalPages, onPageChange }) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="pagination-container">
+      <button 
+        className="pagination-arrow" 
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        &lt;
+      </button>
+      
+      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        <button
+          key={page}
+          className={`pagination-number ${currentPage === page ? "pagination-number-active" : ""}`}
+          onClick={() => onPageChange(page)}
+        >
+          {page}
+        </button>
+      ))}
+
+      <button 
+        className="pagination-arrow" 
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        &gt;
+      </button>
+    </div>
+  );
+}
+
 function AnalysisReportCard({ report, student, onDownload, downloading }) {
   const pct = Math.round((report.accuracy || 0) * 100);
   return (
@@ -163,6 +197,9 @@ function AlunoDetalhe() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("progresso");
   const [downloadingId, setDownloadingId] = useState(null);
+
+  const [currentSessionsPage, setCurrentSessionsPage] = useState(1);
+  const SESSIONS_PER_PAGE = 4;
 
   useEffect(() => {
     if (!studentId) {
@@ -269,6 +306,11 @@ function AlunoDetalhe() {
     navigate("/MainReport", { state: { preSelectedStudentId: studentId } });
   };
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentSessionsPage(1);
+  };
+
   if (isLoading) {
     return (
       <div className="aluno-detalhe-container">
@@ -293,6 +335,11 @@ function AlunoDetalhe() {
   const address = [road, housenumber].filter(Boolean).join(", ");
   const topicsText = Array.isArray(learningTopics) ? learningTopics.join(", ") : learningTopics || "Sem objetivo definido";
   const birthDateDisplay = dateOfBirth || birthDate ? formatDate(dateOfBirth || birthDate) : null;
+
+  const indexOfLastSession = currentSessionsPage * SESSIONS_PER_PAGE;
+  const indexOfFirstSession = indexOfLastSession - SESSIONS_PER_PAGE;
+  const paginatedSessions = sessions.slice(indexOfFirstSession, indexOfLastSession);
+  const totalSessionsPages = Math.ceil(sessions.length / SESSIONS_PER_PAGE);
 
   return (
     <div className="aluno-detalhe-container">
@@ -368,7 +415,7 @@ function AlunoDetalhe() {
               <button
                 key={tab}
                 className={`tab-btn${activeTab === tab ? " tab-btn-active" : ""}`}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabChange(tab)}
               >
                 {TAB_LABELS[tab]}
               </button>
@@ -400,15 +447,23 @@ function AlunoDetalhe() {
               {sessions.length === 0 ? (
                 <p className="empty-state">Nenhuma atividade registrada.</p>
               ) : (
-                <div className="sessions-list">
-                  {sessions.map((s) => (
-                    <SessionCard
-                      key={s.id}
-                      session={s}
-                      onClick={() => navigate("/ReportSession", { state: { sessionId: s.id } })}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="sessions-list">
+                    {paginatedSessions.map((s) => (
+                      <SessionCard
+                        key={s.id}
+                        session={s}
+                        onClick={() => navigate("/ReportSession", { state: { sessionId: s.id } })}
+                      />
+                    ))}
+                  </div>
+                  
+                  <Pagination 
+                    currentPage={currentSessionsPage}
+                    totalPages={totalSessionsPages}
+                    onPageChange={setCurrentSessionsPage}
+                  />
+                </>
               )}
             </section>
           </div>
