@@ -4,9 +4,7 @@
 }
 
 .anamnese-form-content {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 32px 24px;
+  padding: 2rem 2.5rem;
 }
 
 /* Top bar */
@@ -24,20 +22,20 @@
 }
 
 .anamnese-form-back-btn {
-  background: #fff;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
+  background: #ebebeb;
+  border: none;
+  border-radius: 50%;
   width: 38px;
   height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: background 0.15s;
 }
 
 .anamnese-form-back-btn:hover {
-  border-color: #63e9e2;
+  background: #d8d8d8;
 }
 
 .anamnese-form-back-btn img {
@@ -60,13 +58,14 @@
 }
 
 .anamnese-form-save-btn {
-  background-color: #63e9e2;
-  color: #1a1a1a;
-  font-weight: 600;
+  background-color: #7DD4C7;
+  color: #fff;
+  font-weight: 700;
   font-size: 0.95rem;
+  font-family: 'Nunito', sans-serif;
   border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
+  border-radius: 20px;
+  padding: 10px 24px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -75,7 +74,7 @@
 }
 
 .anamnese-form-save-btn:hover:not(:disabled) {
-  background-color: #4dd9d2;
+  background-color: #5bbfb1;
 }
 
 .anamnese-form-save-btn:disabled {
@@ -213,13 +212,14 @@
 }
 
 .anamnese-add-question-btn {
-  background-color: #63e9e2;
-  color: #1a1a1a;
-  font-weight: 600;
+  background-color: #D8F5F3;
+  color: #008D85;
+  font-weight: 700;
   font-size: 0.9rem;
+  font-family: 'Nunito', sans-serif;
   border: none;
-  border-radius: 8px;
-  padding: 9px 16px;
+  border-radius: 20px;
+  padding: 9px 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -228,7 +228,7 @@
 }
 
 .anamnese-add-question-btn:hover {
-  background-color: #4dd9d2;
+  background-color: #c0eeeb;
 }
 
 .anamnese-add-question-btn img {

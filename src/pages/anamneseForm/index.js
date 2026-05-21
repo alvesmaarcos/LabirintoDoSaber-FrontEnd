@@ -4,8 +4,8 @@ import axios from "axios";
 import "./style.css";
 import Navbar from "../../components/ui/NavBar/index.js";
 import iconBack from "../../assets/images/seta_icon_esquerda.png";
-import iconAdd from "../../assets/images/add.png";
-import iconSave from "../../assets/images/relatorio-icon.png";
+import iconAdd from "../../assets/images/icon-add-teal.png";
+import iconSave from "../../assets/images/icon-salvar.png";
 import iconTrash from "../../assets/images/trash.png";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
