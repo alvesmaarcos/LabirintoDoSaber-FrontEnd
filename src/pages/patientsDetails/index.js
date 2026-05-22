@@ -325,6 +325,22 @@ function AlunoDetalhe() {
       const freshRes = await axios.get(`${API_BASE_URL}/task-notebook-session/analysis/student/${studentId}`, config);
       const sessionsData = Array.isArray(freshRes.data.sessions) ? freshRes.data.sessions : [];
 
+      let anamneseData = null;
+      try {
+        const templateId = localStorage.getItem(`anamnese_template_${studentId}`);
+        if (templateId) {
+          const [templateRes, responsesRes] = await Promise.all([
+            axios.get(`${API_BASE_URL}/anamnese/templates/${templateId}`, config),
+            axios.get(`${API_BASE_URL}/anamnese/responses/student/${studentId}`, config),
+          ]);
+          const responses = Array.isArray(responsesRes.data) ? responsesRes.data : [];
+          const response = responses.find((r) => r.templateId === templateId) || null;
+          anamneseData = { template: templateRes.data, response };
+        }
+      } catch (err) {
+        console.error("Erro ao buscar anamnese para PDF:", err);
+      }
+
       const analysisData = snapshotToAnalysisData(report);
       const blob = await pdf(
         <ReportPDF
@@ -333,6 +349,8 @@ function AlunoDetalhe() {
           sessions={sessionsData}
           includeMetrics={true}
           includeObservations={true}
+          includeAnamnese={!!anamneseData}
+          anamneseData={anamneseData}
         />
       ).toBlob();
       const url = URL.createObjectURL(blob);

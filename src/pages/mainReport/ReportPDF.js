@@ -124,9 +124,50 @@ const styles = StyleSheet.create({
     color: '#999999',
     fontFamily: 'Helvetica-Oblique',
   },
+  anamneseMeta: {
+    fontSize: 9,
+    color: '#888888',
+    marginBottom: 10,
+  },
+  anamneseRow: {
+    paddingVertical: 7,
+    borderBottom: 1,
+    borderColor: '#eeeeee',
+  },
+  anamneseQuestion: {
+    fontSize: 10,
+    color: '#888888',
+    marginBottom: 2,
+  },
+  anamneseAnswer: {
+    fontSize: 11,
+    color: '#222222',
+    fontFamily: 'Helvetica-Bold',
+  },
 });
 
-function ReportPDF({ student, analysisData, sessions, includeMetrics, includeObservations }) {
+function getAnswerText(question, response) {
+  if (!response) return '—';
+  const answer = (response.answers || []).find(a => a.questionId === question.id);
+  if (!answer) return '—';
+  if (question.type === 'Descriptive') return answer.textValue || '—';
+  if (question.type === 'MultipleChoice') {
+    const opt = (question.options || []).find(o => o.id === answer.selectedOptionId);
+    return opt ? opt.text : '—';
+  }
+  if (question.type === 'Checkbox') {
+    const ids = answer.selectedOptionIds || [];
+    const texts = ids.map(id => {
+      const opt = (question.options || []).find(o => o.id === id);
+      return opt ? opt.text : id;
+    });
+    return texts.join(', ') || '—';
+  }
+  if (question.type === 'FileUpload') return answer.fileUrl ? answer.fileUrl : '—';
+  return '—';
+}
+
+function ReportPDF({ student, analysisData, sessions, includeMetrics, includeObservations, includeAnamnese, anamneseData }) {
   const categories = analysisData?.categories ?? {};
   const total = analysisData?.total ?? { total: 0, correct: 0, accuracy: 0 };
   const sessionsWithObs = (sessions ?? []).filter(s => s.observation);
@@ -179,6 +220,33 @@ function ReportPDF({ student, analysisData, sessions, includeMetrics, includeObs
                   <Text style={styles.observationText}>"{session.observation}"</Text>
                 </View>
               ))
+            )}
+          </View>
+        )}
+
+        {includeAnamnese && anamneseData?.template && (
+          <View>
+            <Text style={styles.sectionTitle}>
+              Anamnese — {anamneseData.template.title}
+            </Text>
+            {!anamneseData.response ? (
+              <Text style={styles.noData}>Nenhuma resposta de anamnese registrada para este aluno.</Text>
+            ) : (
+              <View>
+                <Text style={styles.anamneseMeta}>
+                  Respondida em {formatDate(anamneseData.response.answeredAt)}
+                </Text>
+                {[...(anamneseData.template.questions || [])]
+                  .sort((a, b) => a.order - b.order)
+                  .map(q => (
+                    <View key={q.id} style={styles.anamneseRow}>
+                      <Text style={styles.anamneseQuestion}>{q.text}</Text>
+                      <Text style={styles.anamneseAnswer}>
+                        {getAnswerText(q, anamneseData.response)}
+                      </Text>
+                    </View>
+                  ))}
+              </View>
             )}
           </View>
         )}

@@ -217,6 +217,24 @@ function MainReport() {
         console.warn("Dica: Se retornar 404, verifique o nome exato do endpoint de criação de histórico/snapshots no back-end.");
       }
 
+      let anamneseData = null;
+      if (includeAnamnese) {
+        try {
+          const templateId = localStorage.getItem(`anamnese_template_${selectedStudent.id}`);
+          if (templateId) {
+            const [templateRes, responsesRes] = await Promise.all([
+              axios.get(`${API_BASE_URL}/anamnese/templates/${templateId}`, { headers }),
+              axios.get(`${API_BASE_URL}/anamnese/responses/student/${selectedStudent.id}`, { headers }),
+            ]);
+            const responses = Array.isArray(responsesRes.data) ? responsesRes.data : [];
+            const response = responses.find((r) => r.templateId === templateId) || null;
+            anamneseData = { template: templateRes.data, response };
+          }
+        } catch (err) {
+          console.error("Erro ao buscar dados de anamnese:", err);
+        }
+      }
+
       try {
         const blob = await pdf(
           <ReportPDF
@@ -225,6 +243,8 @@ function MainReport() {
             sessions={sessionsList}
             includeMetrics={includeMetrics}
             includeObservations={includeObservations}
+            includeAnamnese={includeAnamnese}
+            anamneseData={anamneseData}
           />
         ).toBlob();
         const url = URL.createObjectURL(blob);
