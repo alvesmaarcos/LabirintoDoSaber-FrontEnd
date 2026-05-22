@@ -32,6 +32,7 @@ import SessionInitPage from "./pages/sessionInit";
 import EditStudentPage from "./pages/EditStudent";
 import AnamnesePage from "./pages/anamnese";
 import AnamneseFormPage from "./pages/anamneseForm";
+import AnamneseResponderPage from "./pages/anamneseResponder";
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
         <Route path="/anamnese" element={<AnamnesePage />} />
         <Route path="/anamnese/criar" element={<AnamneseFormPage />} />
         <Route path="/anamnese/editar" element={<AnamneseFormPage />} />
+        <Route path="/anamnese/responder" element={<AnamneseResponderPage />} />
       </Routes>
     </div>
   );

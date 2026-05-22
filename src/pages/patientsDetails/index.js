@@ -195,8 +195,16 @@ function AlunoDetalhe() {
   const [sessions, setSessions] = useState([]);
   const [analysisHistory, setAnalysisHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("progresso");
+  const [activeTab, setActiveTab] = useState(location.state?.openTab || "progresso");
   const [downloadingId, setDownloadingId] = useState(null);
+
+  const [anamneseLoading, setAnamneseLoading] = useState(false);
+  const [anamneseTemplates, setAnamneseTemplates] = useState([]);
+  const [anamneseResponses, setAnamneseResponses] = useState([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [anamneseDropdownOpen, setAnamneseDropdownOpen] = useState(false);
+  const [anamneseSearch, setAnamneseSearch] = useState("");
 
   const [currentSessionsPage, setCurrentSessionsPage] = useState(1);
   const SESSIONS_PER_PAGE = 4;
@@ -268,6 +276,45 @@ function AlunoDetalhe() {
     fetchAll();
   }, [studentId, navigate]);
 
+  useEffect(() => {
+    if (activeTab !== "anamnese" || !studentId) return;
+    let cancelled = false;
+
+    const loadAnamneseData = async () => {
+      setAnamneseLoading(true);
+      try {
+        const token = localStorage.getItem("authToken");
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+
+        const [templatesRes, responsesRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/anamnese/templates`, config),
+          axios.get(`${API_BASE_URL}/anamnese/responses/student/${studentId}`, config).catch(() => ({ data: [] })),
+        ]);
+
+        if (cancelled) return;
+
+        const templates = Array.isArray(templatesRes.data) ? templatesRes.data : [];
+        const responses = Array.isArray(responsesRes.data) ? responsesRes.data : [];
+        setAnamneseTemplates(templates);
+        setAnamneseResponses(responses);
+
+        const persistedId = localStorage.getItem(`anamnese_template_${studentId}`);
+        if (persistedId) {
+          setSelectedTemplateId(persistedId);
+          const tmpl = templates.find((t) => t.id === persistedId);
+          setSelectedTemplate(tmpl || null);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar anamnese:", err);
+      } finally {
+        if (!cancelled) setAnamneseLoading(false);
+      }
+    };
+
+    loadAnamneseData();
+    return () => { cancelled = true; };
+  }, [activeTab, studentId]);
+
   const handleDownloadReport = async (report) => {
     if (downloadingId) return;
     setDownloadingId(report.id);
@@ -311,6 +358,23 @@ function AlunoDetalhe() {
     setCurrentSessionsPage(1);
   };
 
+  const handleSelectAnamneseTemplate = (templateId) => {
+    const tmpl = anamneseTemplates.find((t) => t.id === templateId);
+    setSelectedTemplateId(templateId);
+    setSelectedTemplate(tmpl || null);
+    localStorage.setItem(`anamnese_template_${studentId}`, templateId);
+    setAnamneseDropdownOpen(false);
+    setAnamneseSearch("");
+  };
+
+  const handleChangeAnamneseTemplate = () => {
+    setSelectedTemplateId(null);
+    setSelectedTemplate(null);
+    setAnamneseDropdownOpen(false);
+    setAnamneseSearch("");
+    localStorage.removeItem(`anamnese_template_${studentId}`);
+  };
+
   if (isLoading) {
     return (
       <div className="aluno-detalhe-container">
@@ -335,6 +399,10 @@ function AlunoDetalhe() {
   const address = [road, housenumber].filter(Boolean).join(", ");
   const topicsText = Array.isArray(learningTopics) ? learningTopics.join(", ") : learningTopics || "Sem objetivo definido";
   const birthDateDisplay = dateOfBirth || birthDate ? formatDate(dateOfBirth || birthDate) : null;
+
+  const currentAnamneseResponse = selectedTemplateId
+    ? (anamneseResponses.find((r) => r.templateId === selectedTemplateId) || null)
+    : null;
 
   const indexOfLastSession = currentSessionsPage * SESSIONS_PER_PAGE;
   const indexOfFirstSession = indexOfLastSession - SESSIONS_PER_PAGE;
@@ -499,12 +567,160 @@ function AlunoDetalhe() {
 
         {activeTab === "anamnese" && (
           <div className="tab-content-card">
-            <div className="anamnese-placeholder">
-              <p className="empty-state">Em breve disponível.</p>
-              <p style={{ color: "#aaa", fontSize: "0.9rem" }}>
-                O módulo de Anamnese está em desenvolvimento.
-              </p>
-            </div>
+            {anamneseLoading ? (
+              <p className="empty-state">Carregando...</p>
+            ) : !selectedTemplateId ? (
+              <div className="anamnese-selector">
+                <h3 className="anamnese-selector-title">Selecionar Modelo de Anamnese</h3>
+                <p className="anamnese-selector-subtitle">
+                  Escolha qual protocolo clínico aplicar para este paciente
+                </p>
+                <div className="anamnese-dropdown-wrapper">
+                  <button
+                    className="anamnese-dropdown-trigger"
+                    onClick={() => setAnamneseDropdownOpen((o) => !o)}
+                  >
+                    <span>Buscar modelo de anamnese...</span>
+                    <span className="anamnese-dropdown-arrow">&#8964;</span>
+                  </button>
+                  {anamneseDropdownOpen && (
+                    <div className="anamnese-dropdown-menu">
+                      <input
+                        className="anamnese-dropdown-search"
+                        type="text"
+                        placeholder="Pesquisar..."
+                        value={anamneseSearch}
+                        onChange={(e) => setAnamneseSearch(e.target.value)}
+                        autoFocus
+                      />
+                      <div className="anamnese-dropdown-list">
+                        {anamneseTemplates
+                          .filter((t) =>
+                            t.title.toLowerCase().includes(anamneseSearch.toLowerCase())
+                          )
+                          .map((t) => (
+                            <div
+                              key={t.id}
+                              className="anamnese-dropdown-item"
+                              onClick={() => handleSelectAnamneseTemplate(t.id)}
+                            >
+                              <span className="anamnese-dropdown-item-title">{t.title}</span>
+                              {t.description && (
+                                <span className="anamnese-dropdown-item-desc">{t.description}</span>
+                              )}
+                            </div>
+                          ))}
+                        {anamneseTemplates.filter((t) =>
+                          t.title.toLowerCase().includes(anamneseSearch.toLowerCase())
+                        ).length === 0 && (
+                          <div className="anamnese-dropdown-empty">Nenhum modelo encontrado</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="anamnese-view-header">
+                  <div className="anamnese-view-header-left">
+                    <h3 className="anamnese-view-title">
+                      {selectedTemplate?.title || "Anamnese"}
+                    </h3>
+                    {!currentAnamneseResponse && (
+                      <button
+                        className="anamnese-change-btn"
+                        onClick={handleChangeAnamneseTemplate}
+                      >
+                        Trocar modelo
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    className="btn-editar-anamnese"
+                    onClick={() =>
+                      navigate("/anamnese/responder", {
+                        state: {
+                          templateId: selectedTemplateId,
+                          studentId,
+                          responseId: currentAnamneseResponse?.id || null,
+                        },
+                      })
+                    }
+                  >
+                    <img src={editIcon} alt="" className="btn-icon" />
+                    {currentAnamneseResponse ? "Editar Anamnese" : "Preencher Anamnese"}
+                  </button>
+                </div>
+
+                {currentAnamneseResponse && (
+                  <div className="anamnese-info-bar">
+                    <span>
+                      <strong>Última atualização:</strong>{" "}
+                      {formatDateTime(currentAnamneseResponse.answeredAt)}
+                    </span>
+                    <span>
+                      <strong>Profissional:</strong> {educatorDetails?.name || "—"}
+                    </span>
+                  </div>
+                )}
+
+                {!currentAnamneseResponse && (
+                  <p className="empty-state">
+                    Nenhuma resposta registrada. Clique em "Preencher Anamnese" para começar.
+                  </p>
+                )}
+
+                {currentAnamneseResponse && selectedTemplate && (
+                  <div className="anamnese-questions-view">
+                    {[...(selectedTemplate.questions || [])]
+                      .sort((a, b) => a.order - b.order)
+                      .map((q) => {
+                        const answer = (currentAnamneseResponse.answers || []).find(
+                          (a) => a.questionId === q.id
+                        );
+                        let answerDisplay = "—";
+                        if (answer) {
+                          if (q.type === "Descriptive") {
+                            answerDisplay = answer.textValue || "—";
+                          } else if (q.type === "MultipleChoice") {
+                            const opt = (q.options || []).find(
+                              (o) => o.id === answer.selectedOptionId
+                            );
+                            answerDisplay = opt ? opt.text : "—";
+                          } else if (q.type === "Checkbox") {
+                            const ids = answer.selectedOptionIds || [];
+                            const texts = ids
+                              .map((id) => {
+                                const opt = (q.options || []).find((o) => o.id === id);
+                                return opt ? opt.text : id;
+                              })
+                              .join(", ");
+                            answerDisplay = texts || "—";
+                          } else if (q.type === "FileUpload") {
+                            answerDisplay = answer.fileUrl ? (
+                              <a
+                                href={answer.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="anamnese-file-link"
+                              >
+                                Ver arquivo
+                              </a>
+                            ) : "—";
+                          }
+                        }
+                        return (
+                          <div key={q.id} className="anamnese-q-row">
+                            <div className="anamnese-q-text">{q.text}</div>
+                            <div className="anamnese-q-answer">{answerDisplay}</div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
       </main>

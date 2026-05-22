@@ -1,0 +1,233 @@
+.ar-page {
+  min-height: 100vh;
+  background-color: #f5f6fa;
+}
+
+.ar-content {
+  padding: 2rem 2.5rem 4rem;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+/* Top bar */
+.ar-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.ar-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ar-back-btn {
+  background: #ebebeb;
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.ar-back-btn:hover {
+  background: #d8d8d8;
+}
+
+.ar-back-btn img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.ar-page-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #111;
+  margin: 0;
+}
+
+.ar-save-btn {
+  background-color: #7dd4c7;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-family: "Nunito", sans-serif;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.ar-save-btn:hover:not(:disabled) {
+  background-color: #5bbfb1;
+}
+
+.ar-save-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.ar-save-btn img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: brightness(10);
+}
+
+/* Template title */
+.ar-template-title {
+  font-size: 1rem;
+  color: #888;
+  margin: 0 0 1.5rem;
+  font-weight: 500;
+}
+
+/* Error message */
+.ar-error {
+  background: #fdf2f1;
+  color: #c0392b;
+  border: 1px solid #f0c0bc;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.ar-loading {
+  text-align: center;
+  color: #999;
+  margin-top: 60px;
+  font-size: 0.95rem;
+}
+
+/* Questions */
+.ar-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ar-question {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.4rem 1.6rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.ar-question-text {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #222;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.ar-required {
+  color: #e74c3c;
+}
+
+/* Options */
+.ar-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.5rem;
+}
+
+.ar-option-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.93rem;
+  color: #333;
+  cursor: pointer;
+}
+
+.ar-option-label input[type="radio"],
+.ar-option-label input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #63e9e2;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Textarea */
+.ar-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.93rem;
+  font-family: "Nunito", sans-serif;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+  color: #333;
+  transition: border-color 0.15s;
+}
+
+.ar-textarea:focus {
+  border-color: #63e9e2;
+}
+
+/* File upload */
+.ar-file-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ar-file-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ar-file-input-hidden {
+  display: none;
+}
+
+.ar-file-btn {
+  display: inline-flex;
+  align-items: center;
+  background: #d8f5f3;
+  color: #008d85;
+  border: 1.5px solid #72ded4;
+  border-radius: 20px;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: "Nunito", sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ar-file-btn:hover {
+  background: #c0eeeb;
+}
+
+.ar-file-uploaded-link {
+  font-size: 0.88rem;
+  color: #008d85;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ar-file-error {
+  font-size: 0.85rem;
+  color: #c0392b;
+}

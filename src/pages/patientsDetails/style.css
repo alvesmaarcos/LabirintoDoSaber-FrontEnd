@@ -541,8 +541,232 @@ body {
   background-color: #b8ede9;
 }
 
-/* ── Anamnese placeholder ── */
-.anamnese-placeholder {
+/* ── Anamnese tab ── */
+.anamnese-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  gap: 0.6rem;
+}
+
+.anamnese-selector-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #222;
+}
+
+.anamnese-selector-subtitle {
+  margin: 0 0 1rem;
+  color: #888;
+  font-size: 0.92rem;
   text-align: center;
-  padding: 2rem 0;
+}
+
+.anamnese-dropdown-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+}
+
+.anamnese-dropdown-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  font-size: 0.93rem;
+  font-family: "Nunito", sans-serif;
+  color: #aaa;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.anamnese-dropdown-trigger:hover {
+  border-color: #63e9e2;
+}
+
+.anamnese-dropdown-arrow {
+  font-size: 1.1rem;
+  color: #bbb;
+}
+
+.anamnese-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.anamnese-dropdown-search {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+  font-family: "Nunito", sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  color: #333;
+}
+
+.anamnese-dropdown-list {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.anamnese-dropdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.anamnese-dropdown-item:hover {
+  background: #f0fffe;
+}
+
+.anamnese-dropdown-item-title {
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.anamnese-dropdown-item-desc {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.anamnese-dropdown-empty {
+  padding: 0.9rem 1rem;
+  color: #aaa;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+/* Filled view */
+.anamnese-view-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.anamnese-view-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.anamnese-view-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #111;
+}
+
+.anamnese-change-btn {
+  background: none;
+  border: none;
+  color: #008d85;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: "Nunito", sans-serif;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.anamnese-change-btn:hover {
+  color: #63e9e2;
+}
+
+.btn-editar-anamnese {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #d8f5f3;
+  color: #008d85;
+  border: 1.5px solid #72ded4;
+  padding: 0.55rem 1.1rem;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: "Nunito", sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-editar-anamnese:hover {
+  background-color: #c0eeeb;
+}
+
+.btn-editar-anamnese .btn-icon {
+  width: 15px;
+  height: 15px;
+  filter: brightness(0) saturate(100%) invert(38%) sepia(60%) saturate(400%) hue-rotate(145deg);
+}
+
+.anamnese-info-bar {
+  background: #e8f8f7;
+  border-radius: 10px;
+  padding: 0.75rem 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  font-size: 0.88rem;
+  color: #444;
+  border: 1px solid #c0ede9;
+}
+
+.anamnese-info-bar strong {
+  color: #222;
+}
+
+/* Questions view */
+.anamnese-questions-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.anamnese-q-row {
+  background: #f9f9f9;
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.anamnese-q-text {
+  font-size: 0.85rem;
+  color: #888;
+  font-weight: 600;
+}
+
+.anamnese-q-answer {
+  font-size: 0.95rem;
+  color: #222;
+  font-weight: 500;
+}
+
+.anamnese-file-link {
+  color: #008d85;
+  text-decoration: underline;
 }
